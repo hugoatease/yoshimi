@@ -35,7 +35,8 @@ server.register({
     },
     autoIndex: true,
     models: {
-      'User': './models/user'
+      User: './models/user',
+      OAuthClient: './models/oauthClient'
     }
   }
 
