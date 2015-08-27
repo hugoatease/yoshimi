@@ -15,6 +15,16 @@ server.register({
 }, function(err) {
   if (!err) return;
   console.log(err);
+});
+
+server.register(require('hapi-auth-cookie'), function(err) {
+  server.auth.strategy('session', 'cookie', {
+    cookie: 'yoshimi-auth',
+    password: 'OsYAL0FLiEYeAC5OP05X21kqlWf9k9cT2TP4m3xgE9M=',
+    isSecure: false,
+    redirectTo: '/login',
+    appendNext: true
+  })
 })
 
 server.register({

@@ -9,6 +9,7 @@
     "bcrypt": "^0.8.5",
     "handlebars": "^3.0.3",
     "hapi": "^9.0.3",
+    "hapi-auth-cookie": "^3.1.0",
     "hapi-mongo-models": "^2.2.0",
     "inert": "^3.0.1",
     "joi": "^6.6.1",
