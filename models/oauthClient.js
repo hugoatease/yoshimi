@@ -11,7 +11,7 @@ var OAuthClient = BaseModel.extend({
 
   checkClient: function(client_id, redirect_uri) {
     return new Promise(function(resolve, reject) {
-      this.findOne({client_id: client_id, redirect_uri: redirect_uri}, function(err, result) {
+      this.findOne({client_id: this.ObjectId(client_id), redirect_uri: redirect_uri}, function(err, result) {
         if (err) return reject(err);
         if (!result) {
           reject(new Error('Client not found'));
