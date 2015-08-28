@@ -7,20 +7,6 @@ var Promise = require('bluebird');
 var OAuthClient = BaseModel.extend({
   constructor: function(attrs) {
     ObjectAssign(this, attrs);
-  },
-
-  checkClient: function(client_id, redirect_uri) {
-    return new Promise(function(resolve, reject) {
-      this.findOne({client_id: this.ObjectId(client_id), redirect_uri: redirect_uri}, function(err, result) {
-        if (err) return reject(err);
-        if (!result) {
-          reject(new Error('Client not found'));
-        }
-        else {
-          resolve(result);
-        }
-      })
-    }.bind(this));
   }
 });
 

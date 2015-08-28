@@ -7,6 +7,21 @@ var path = require('path');
 var url = require('url');
 
 var key = fs.readFileSync(path.join(__dirname, '..', 'yoshimi.pem'));
+var OAuthClient = require('../models/oauthClient');
+
+function checkClient (client_id, redirect_uri) {
+  return new Promise(function(resolve, reject) {
+    OAuthClient.findOne({client_id: client_id, redirect_uri: redirect_uri}, function(err, result) {
+      if (err) return reject(err);
+      if (!result) {
+        reject(new Error('Client not found'));
+      }
+      else {
+        resolve(result);
+      }
+    })
+  }.bind(this));
+}
 
 module.exports = function(server) {
   server.route({
@@ -15,7 +30,7 @@ module.exports = function(server) {
     handler: function(request, reply) {
       var OAuthClient = request.server.plugins['hapi-mongo-models'].OAuthClient;
       var scopes = words(request.query.scope);
-      OAuthClient.checkClient(request.query.client_id, request.query.redirect_uri).then(function(client) {
+      checkClient(request.query.client_id, request.query.redirect_uri).then(function(client) {
         if (scopes.indexOf('openid') === -1) {
           return reply(new Error('Request must include openid scope'));
         }
