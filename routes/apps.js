@@ -27,15 +27,11 @@ module.exports = function(server) {
         client_id: uid(42),
         client_secret: uid(42)
       }).then(function(props) {
-        OAuthClient.insertOne({
-          client_id: client_id,
-          client_secret: client_secret,
-          owner: request.auth.credentials._id,
-          name: request.payload.name,
-          description: request.payload.description,
-          redirect_uri: request.payload.redirect_uri,
-          enable_grant_token: request.payload.enable_grant_token
-        }, function(err, result) {
+        var client = request.payload;
+        client.client_id = client_id;
+        client.client_secret = client_secret;
+        client.owner = request.auth.credentials._id;
+        OAuthClient.insertOne(client, function(err, result) {
           reply(result);
         })
       })
@@ -46,7 +42,7 @@ module.exports = function(server) {
         payload: {
           name: Joi.string().required(),
           description: Joi.string(),
-          redirect_uri: Joi.uri({scheme: [http, https]}),
+          redirect_uri: Joi.string().uri({scheme: ['http', 'https']}),
           enable_grant_token: Joi.boolean()
         }
       }
@@ -80,6 +76,28 @@ module.exports = function(server) {
       OAuthClient.deleteOne({_id: request.params.id, owner: request.auth.credentials._id}, function(err) {
         reply(204);
       });
+    }
+  })
+
+  server.route({
+    method: 'PUT',
+    path: '/api/apps/{id}',
+    handler: function(request, reply) {
+      var OAuthClient = request.server.plugins['hapi-mongo-models'].OAuthClient;
+      OAuthClient.updateOne({_id: request.params.id, owner: request.auth.credentials._id}, request.payload, function(err) {
+        if (err) return reply(err);
+        reply(200);
+      })
+    },
+    config: {
+      auth: 'session',
+      validate: {
+        payload: {
+          description: Joi.string(),
+          redirect_uri: Joi.string().uri({scheme: ['http', 'https']}),
+          enable_grant_token: Joi.boolean()
+        }
+      }
     }
   })
 }
