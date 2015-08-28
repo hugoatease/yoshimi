@@ -84,7 +84,7 @@ module.exports = function(server) {
     path: '/api/apps/{id}',
     handler: function(request, reply) {
       var OAuthClient = request.server.plugins['hapi-mongo-models'].OAuthClient;
-      OAuthClient.updateOne({_id: OAuthClient.ObjectId(request.params.id), owner: request.auth.credentials._id}, request.payload, function(err) {
+      OAuthClient.updateOne({_id: OAuthClient.ObjectId(request.params.id), owner: request.auth.credentials._id}, {$set: request.payload}, function(err) {
         if (err) return reply(err);
         reply(200);
       })
