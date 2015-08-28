@@ -7,6 +7,8 @@
   "license": "Apache-2.0",
   "dependencies": {
     "bcrypt": "^0.8.5",
+    "bluebird": "^2.9.34",
+    "boom": "^2.8.0",
     "handlebars": "^3.0.3",
     "hapi": "^9.0.3",
     "hapi-auth-cookie": "^3.1.0",
@@ -16,6 +18,7 @@
     "joi-objectid": "^1.1.0",
     "mongodb": "^2.0.42",
     "object-assign": "^4.0.1",
+    "uid-safe": "^2.0.0",
     "vision": "^3.0.0",
     "yar": "^3.0.3"
   },
