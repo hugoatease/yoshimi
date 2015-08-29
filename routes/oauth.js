@@ -7,11 +7,23 @@ var path = require('path');
 var url = require('url');
 var includes = require('array-includes');
 var uid = require('uid-safe');
+var _ = require('lodash');
 
 var redis = require('then-redis').createClient();
 
 var key = fs.readFileSync(path.join(__dirname, '..', 'yoshimi.pem'));
 var OAuthClient = require('../models/oauthClient');
+
+var scopeClaims = {
+  profile: [
+    'name', 'family_name', 'given_name', 'middle_name', 'nickname', 'preferred_username',
+    'profile', 'picture', 'website', 'gender', 'birthdate', 'zoneinfo', 'locale', 'updated_at'
+  ],
+  email: ['email', 'email_verified'],
+  address: ['address'],
+  phone: ['phone_number', 'phone_number_verified']
+}
+
 
 function trimValues(values) {
   return values.split(' ').filter(function(value) { return value; });
@@ -202,7 +214,7 @@ module.exports = function(server) {
       grants[request.payload.grant_type](server, request, reply);
     },
     config: {
-      auth: 'simple',
+      auth: 'basic',
       validate: {
         payload: {
           grant_type: Joi.string().required().valid(['authorization_code']),
@@ -211,6 +223,30 @@ module.exports = function(server) {
           client_id: Joi.string()
         }
       }
+    }
+  });
+
+  server.route({
+    method: 'GET',
+    path: '/oauth/userinfo',
+    handler: function(request, reply) {
+      var User = request.server.plugins['hapi-mongo-models'].User;
+      User.findById(request.auth.credentials.user_id, function(err, user) {
+        if (err) return err;
+
+        var scopes = trimValues(request.auth.credentials.scope);
+        var result = {
+          sub: user._id
+        }
+        scopes.forEach(function(scope) {
+          _.merge(result, _.pick(user, scopeClaims[scope]));
+        }.bind(this));
+
+        reply(result);
+      })
+    },
+    config: {
+      auth: 'bearer'
     }
   })
 }

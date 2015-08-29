@@ -1,4 +1,5 @@
 var Hapi = require('hapi');
+var Promise = require('bluebird');
 
 var server = new Hapi.Server();
 server.connection({port: 3000});
@@ -28,7 +29,7 @@ server.register(require('hapi-auth-cookie'), function(err) {
 });
 
 server.register(require('hapi-auth-basic'), function(err) {
-  server.auth.strategy('simple', 'basic', {
+  server.auth.strategy('basic', 'basic', {
     validateFunc: function(request, username, password, callback) {
       var OAuthClient = request.server.plugins['hapi-mongo-models'].OAuthClient;
       OAuthClient.findOne({client_id: username, client_secret: password}, function(err, client) {
@@ -39,6 +40,28 @@ server.register(require('hapi-auth-basic'), function(err) {
         else {
           callback(null, true, {client_id: username, client_secret: password});
         }
+      });
+    }
+  })
+});
+
+server.register(require('hapi-auth-bearer-token'), function(err) {
+  var redis = require('then-redis').createClient();
+  server.auth.strategy('bearer', 'bearer-access-token', {
+    validateFunc: function(token, callback) {
+      Promise.props({
+        client: redis.get('yoshimi.oauth.token.' + token + '.client'),
+        user: redis.get('yoshimi.oauth.token.' + token + '.user'),
+        scope: redis.get('yoshimi.oauth.token.' + token + '.scope')
+      }).then(function(props) {
+        if (!props.client) {
+          callback(null, false);
+        }
+        else {
+          callback(null, true, {client_id: props.client_id, user_id: props.user, scope: props.scope});
+        }
+      }).catch(function(err) {
+        callback(err);
       });
     }
   })
