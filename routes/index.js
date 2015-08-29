@@ -3,4 +3,5 @@ module.exports = function(server) {
   require('./login')(server);
   require('./apps')(server);
   require('./oauth')(server);
+  require('./recovery')(server);
 }
