@@ -28,13 +28,33 @@ function checkClient(client_id, redirect_uri) {
   }.bind(this));
 }
 
-function createIdToken(server, request) {
+function createBearer(client_id, user_id, scope) {
+  return new Promise(function(resolve, reject) {
+    uid(16).then(function(bearer) {
+      Promise.all([
+        redis.set('yoshimi.oauth.token.' + bearer + '.client', client_id),
+        redis.set('yoshimi.oauth.token.' + bearer + '.user', user_id),
+        redis.set('yoshimi.oauth.token.' + bearer + '.scope', scope),
+        redis.expire('yoshimi.oauth.token.' + bearer + '.client', 3600 * 24 * 15),
+        redis.expire('yoshimi.oauth.token.' + bearer + '.client', 3600 * 24 * 15),
+        redis.expire('yoshimi.oauth.token.' + bearer + '.client', 3600 * 24 * 15)
+      ]).then(function() {
+          resolve({
+            bearer: bearer,
+            expires: 3600 * 24 * 15
+          })
+      });
+    });
+  });
+}
+
+function createIdToken(server, client_id, user_id) {
   return jwt.sign({}, key, {
     algorithm: 'RS256',
     expiresInSeconds: 3600 * 24 * 15,
     issuer: server.info.uri,
-    subject: request.auth.credentials._id,
-    audience: request.query.client_id
+    subject: user_id,
+    audience: client_id
   });
 }
 
@@ -42,10 +62,12 @@ var flows = {
   code: function(server, request, reply) {
     uid(16).then(function(code) {
       Promise.all([
-        redis.set('yoshimi.oauth.' + request.query.client_id + '.' + code + '.user', request.auth.credentials._id),
-        redis.expire('yoshimi.oauth.' + request.query.client_id + '.' + code + '.user', 60),
-        redis.set('yoshimi.oauth.' + request.query.client_id + '.' + code + '.redirect_uri', request.query.redirect_uri),
-        redis.expire('yoshimi.oauth.' + request.query.client_id + '.' + code + '.redirect_uri', 60)
+        redis.set('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.user', request.auth.credentials._id),
+        redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.user', 60),
+        redis.set('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.redirect_uri', request.query.redirect_uri),
+        redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.redirect_uri', 60),
+        redis.set('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.scope', request.query.scope),
+        redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.scope', 60)
       ]).then(function() {
         var redirect_uri = url.parse(request.query.redirect_uri);
         if (!redirect_uri.query) redirect_uri.query = {};
@@ -56,15 +78,17 @@ var flows = {
   },
 
   implicit: function(server, request, reply) {
-    var id_token = createIdToken(server, request);
-    var redirect_uri = url.parse(request.query.redirect_uri);
-    if (!redirect_uri.query) redirect_uri.query = {};
-    redirect_uri.query.access_token = id_token;
-    redirect_uri.query.id_token = id_token;
-    redirect_uri.query.token_type = 'JWT';
-    redirect_uri.query.expires_in = 3600 * 24 * 15;
+    createBearer(request.query.client_id, request.auth.credentials._id, request.query.scope).then(function(bearer) {
+      var id_token = createIdToken(server, request.query.client_id, request.auth.credentials._id);
+      var redirect_uri = url.parse(request.query.redirect_uri);
+      if (!redirect_uri.query) redirect_uri.query = {};
+      redirect_uri.query.access_token = bearer.bearer;
+      redirect_uri.query.id_token = id_token;
+      redirect_uri.query.token_type = 'Bearer';
+      redirect_uri.query.expires_in = bearer.expires;
 
-    reply.redirect(url.format(redirect_uri));
+      reply.redirect(url.format(redirect_uri));
+    });
   }
 }
 
@@ -74,13 +98,15 @@ var grants = {
       return reply(Boom.badRequest('redirect_uri must be provided'));
     }
     Promise.props({
-      user: redis.get('yoshimi.oauth.' + request.auth.credentials.client_id + '.' + request.payload.code + '.user'),
-      storedRedirect: redis.get('yoshimi.oauth.' + request.auth.credentials.client_id + '.' + request.payload.code + '.redirect_uri')
+      user: redis.get('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.user'),
+      storedRedirect: redis.get('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.redirect_uri'),
+      scope: redis.get('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.scope')
     }).then(function(props) {
       console.log(props);
       Promise.all([
-        redis.del('yoshimi.oauth.' + request.auth.credentials.client_id + '.' + request.payload.code + '.user'),
-        redis.del('yoshimi.oauth.' + request.auth.credentials.client_id + '.' + request.payload.code + '.redirect_uri')
+        redis.del('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.user'),
+        redis.del('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.redirect_uri'),
+        redis.del('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.scope')
       ]).then(function() {
         if (!props.user) {
           return reply(Boom.unauthorized('Invalid authorization code'));
@@ -89,13 +115,16 @@ var grants = {
           return reply(Boom.unauthorized('Authorization code redirect_uri differs from provided redirect_uri'));
         }
 
-        var id_token = createIdToken(server, request);
-        reply({
-          access_token: id_token,
-          id_token: id_token,
-          token_type: 'JWT',
-          expires_in: 3600 * 24 * 15
-        })
+        createBearer(request.auth.credentials.client_id, props.user, props.scope).then(function(bearer) {
+          var id_token = createIdToken(server, request.auth.credentials.client_id, props.user);
+          console.log(bearer);
+          reply({
+            access_token: bearer.bearer,
+            id_token: id_token,
+            token_type: 'Bearer',
+            expires_in: bearer.expires
+          });
+        });
       });
     });
   }
