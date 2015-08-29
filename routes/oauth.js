@@ -1,4 +1,5 @@
 var Joi = require('joi');
+var Boom = require('boom');
 var Promise = require('bluebird');
 var words = require('lodash.words');
 var jwt = require('jsonwebtoken');
@@ -18,7 +19,7 @@ function checkClient(client_id, redirect_uri) {
     OAuthClient.findOne({client_id: client_id, redirect_uri: redirect_uri}, function(err, result) {
       if (err) return reject(err);
       if (!result) {
-        reject(new Error('Client not found'));
+        reject(Boom.unauthorized('Client not found'));
       }
       else {
         resolve(result);
@@ -27,7 +28,7 @@ function checkClient(client_id, redirect_uri) {
   }.bind(this));
 }
 
-function createIdToken(request) {
+function createIdToken(server, request) {
   return jwt.sign({}, key, {
     algorithm: 'RS256',
     expiresInSeconds: 3600 * 24 * 15,
@@ -38,7 +39,7 @@ function createIdToken(request) {
 }
 
 var flows = {
-  code: function(request, reply) {
+  code: function(server, request, reply) {
     uid(16).then(function(code) {
       Promise.all([
         redis.set('yoshimi.oauth.' + request.query.client_id + '.' + code + '.user', request.auth.credentials._id),
@@ -54,8 +55,8 @@ var flows = {
     })
   },
 
-  implicit: function(request, reply) {
-    var id_token = createIdToken(request);
+  implicit: function(server, request, reply) {
+    var id_token = createIdToken(server, request);
     var redirect_uri = url.parse(request.query.redirect_uri);
     if (!redirect_uri.query) redirect_uri.query = {};
     redirect_uri.query.access_token = id_token;
@@ -68,26 +69,27 @@ var flows = {
 }
 
 var grants = {
-  authorization_code: function(request, reply) {
+  authorization_code: function(server, request, reply) {
     if (!request.payload.redirect_uri) {
-      return reply(new Error('redirect_uri must be provided'));
+      return reply(Boom.badRequest('redirect_uri must be provided'));
     }
     Promise.props({
-      user: redis.get('yoshimi.oauth.' + request.query.client_id + '.' + code + '.user'),
-      storedRedirect: redis.get('yoshimi.oauth.' + request.query.client_id + '.' + code + '.redirect_uri')
+      user: redis.get('yoshimi.oauth.' + request.auth.credentials.client_id + '.' + request.payload.code + '.user'),
+      storedRedirect: redis.get('yoshimi.oauth.' + request.auth.credentials.client_id + '.' + request.payload.code + '.redirect_uri')
     }).then(function(props) {
+      console.log(props);
       Promise.all([
-        redis.del('yoshimi.oauth.' + request.query.client_id + '.' + code + '.user'),
-        redis.del('yoshimi.oauth.' + request.query.client_id + '.' + code + '.redirect_uri')
+        redis.del('yoshimi.oauth.' + request.auth.credentials.client_id + '.' + request.payload.code + '.user'),
+        redis.del('yoshimi.oauth.' + request.auth.credentials.client_id + '.' + request.payload.code + '.redirect_uri')
       ]).then(function() {
         if (!props.user) {
-          return reply(new Error('Invalid authorization code'));
+          return reply(Boom.unauthorized('Invalid authorization code'));
         }
-        if (props.storedRedirect !== request.query.redirect_uri) {
-          return reply(new Error('Authorization code redirect_uri differs from provided redirect_uri'));
+        if (props.storedRedirect !== request.payload.redirect_uri) {
+          return reply(Boom.unauthorized('Authorization code redirect_uri differs from provided redirect_uri'));
         }
 
-        var id_token = createIdToken(request);
+        var id_token = createIdToken(server, request);
         reply({
           access_token: id_token,
           id_token: id_token,
@@ -131,18 +133,18 @@ module.exports = function(server) {
       var scopes = words(request.query.scope);
       checkClient(request.query.client_id, request.query.redirect_uri).then(function(client) {
         if (!includes(scopes, 'openid')) {
-          return reply(new Error('Request must include openid scope'));
+          return reply(Boom.badRequest('Request must include openid scope'));
         }
 
         var flow = matchFlow(request.query.response_type);
         if (!flow) {
-          return reply(new Error('Invalid response_type'));
+          return reply(Boom.badRequest('Invalid response_type'));
         }
         if (!flows[flow]) {
-          return reply(new Error(flow + ' flow not supported'));
+          return reply(Boom.badRequest(flow + ' flow not supported'));
         }
 
-        return flows[flow](request, reply);
+        return flows[flow](server, request, reply);
       }).catch(function(err) {
         reply(err);
       });
@@ -165,15 +167,15 @@ module.exports = function(server) {
     path: '/oauth/token',
     handler: function(request, reply) {
       if (!grants[request.payload.grant_type]) {
-        return reply(new Error('Unknown grant_type ' + request.payload.grant_type));
+        return reply(Boom.badRequest('Unknown grant_type ' + request.payload.grant_type));
       }
-      grants[request.payload.grant_type](request, reply);
+      grants[request.payload.grant_type](server, request, reply);
     },
     config: {
       auth: 'simple',
       validate: {
         payload: {
-          grant_type: Joi.string().required(),
+          grant_type: Joi.string().required().valid(['authorization_code']),
           code: Joi.string(),
           redirect_uri: Joi.string(),
           client_id: Joi.string()
