@@ -33,7 +33,7 @@ function createIdToken(server, request) {
     algorithm: 'RS256',
     expiresInSeconds: 3600 * 24 * 15,
     issuer: server.info.uri,
-    subject: request.auth.credentials.username,
+    subject: request.auth.credentials._id,
     audience: request.query.client_id
   });
 }
