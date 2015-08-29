@@ -97,15 +97,27 @@ server.register(require('inert'), function(err) {
   })
 });
 
+var viewsOptions = {
+  engines: {hbs: require('handlebars')},
+  relativeTo: __dirname,
+  path: 'views',
+  layout: true,
+  isCached: false
+}
+
 server.register(require('vision'), function(err) {
-  server.views({
-    engines: {hbs: require('handlebars')},
-    relativeTo: __dirname,
-    path: 'views',
-    layout: true,
-    isCached: false
-  })
+  server.views(viewsOptions);
 });
+
+server.register({
+  register: require('hapi-mailer'),
+  options: {
+    views: viewsOptions
+  }
+}, function(err) {
+  if (!err) return;
+  console.log(err);
+})
 
 require('./routes')(server);
 
