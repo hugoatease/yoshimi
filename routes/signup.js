@@ -107,17 +107,22 @@ module.exports = function(server) {
           return reply(Boom.unauthorized('Invalid verification token'));
         }
         var User = request.server.plugins['hapi-mongo-models'].User;
-        User.findById(data.sub, function(err, user) {
+        User.count({email: data.email, email_verified: true}, function(err, verified) {
           if (err) return reply(err);
-          if (user.email !== data.email) {
-            return reply(Boom.unauthorized('Token email doesn\'t match user email address'));
+          if (verified > 0) {
+            return reply(Boom.unauthorized('Email adress has already been verified'));
           }
-          User.updateOne({_id: data.sub, email: data.email}, {email_verified: true}, function(err, data) {
+          User.findById(data.sub, function(err, user) {
             if (err) return reply(err);
-            reply('Email has been successfully verified');
-          });
+            if (user.email !== data.email) {
+              return reply(Boom.unauthorized('Token email doesn\'t match user email address'));
+            }
+            User.updateOne({_id: User.ObjectId(data.sub), email: data.email}, {$set: {email_verified: true}}, function(err, updated) {
+              if (err) return reply(err);
+              reply('Email has been successfully verified');
+            });
+          })
         })
-        console.log(data);
       })
     },
     config: {
