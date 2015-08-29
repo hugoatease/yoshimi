@@ -1,7 +1,6 @@
 var Joi = require('joi');
 var Boom = require('boom');
 var Promise = require('bluebird');
-var words = require('lodash.words');
 var jwt = require('jsonwebtoken');
 var fs = require('fs');
 var path = require('path');
@@ -13,6 +12,10 @@ var redis = require('then-redis').createClient();
 
 var key = fs.readFileSync(path.join(__dirname, '..', 'yoshimi.pem'));
 var OAuthClient = require('../models/oauthClient');
+
+function trimValues(values) {
+  return values.split(' ').filter(function(value) { return value; });
+}
 
 function checkClient(client_id, redirect_uri) {
   return new Promise(function(resolve, reject) {
@@ -102,7 +105,6 @@ var grants = {
       storedRedirect: redis.get('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.redirect_uri'),
       scope: redis.get('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.scope')
     }).then(function(props) {
-      console.log(props);
       Promise.all([
         redis.del('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.user'),
         redis.del('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.redirect_uri'),
@@ -117,7 +119,6 @@ var grants = {
 
         createBearer(request.auth.credentials.client_id, props.user, props.scope).then(function(bearer) {
           var id_token = createIdToken(server, request.auth.credentials.client_id, props.user);
-          console.log(bearer);
           reply({
             access_token: bearer.bearer,
             id_token: id_token,
@@ -131,7 +132,7 @@ var grants = {
 }
 
 function matchFlow(response_type) {
-  var types = words(response_type);
+  var types = trimValues(response_type);
   if (includes(types, 'code') && !includes(types, 'id_token') && !includes(types, 'token')) {
     return 'code';
   }
@@ -159,7 +160,7 @@ module.exports = function(server) {
     path: '/oauth/authorize',
     handler: function(request, reply) {
       var OAuthClient = request.server.plugins['hapi-mongo-models'].OAuthClient;
-      var scopes = words(request.query.scope);
+      var scopes = trimValues(request.query.scope);
       checkClient(request.query.client_id, request.query.redirect_uri).then(function(client) {
         if (!includes(scopes, 'openid')) {
           return reply(Boom.badRequest('Request must include openid scope'));
@@ -183,7 +184,7 @@ module.exports = function(server) {
       validate: {
         query: {
           scope: Joi.string().required(),
-          response_type: Joi.string().required().valid(['code', 'token']),
+          response_type: Joi.string().required(),
           client_id: Joi.string().required(),
           redirect_uri: Joi.string().required().uri({scheme: ['http', 'https']})
         }
