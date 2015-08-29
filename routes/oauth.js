@@ -43,7 +43,7 @@ function checkClient(client_id, redirect_uri) {
   }.bind(this));
 }
 
-function createBearer(client_id, user_id, scope) {
+function createBearer(client_id, user_id, scope, refresh) {
   return new Promise(function(resolve, reject) {
     uid(16).then(function(bearer) {
       Promise.all([
@@ -54,10 +54,26 @@ function createBearer(client_id, user_id, scope) {
         redis.expire('yoshimi.oauth.token.' + bearer + '.client', 3600 * 24 * 15),
         redis.expire('yoshimi.oauth.token.' + bearer + '.client', 3600 * 24 * 15)
       ]).then(function() {
+        if (refresh) {
+          uid(16).then(function(refresh_token) {
+            Promise.all([
+              redis.set('yoshimi.oauth.refresh_token.' + refresh_token, bearer),
+              redis.expire('yoshimi.oauth.refresh_token.' + refresh_token, 3600 * 24 * 15)
+            ]).then(function() {
+              resolve({
+                bearer: bearer,
+                refresh: refresh_token,
+                expires: 3600 * 24 * 15
+              })
+            });
+          });
+        }
+        else {
           resolve({
             bearer: bearer,
             expires: 3600 * 24 * 15
           })
+        }
       });
     });
   });
@@ -129,14 +145,58 @@ var grants = {
           return reply(Boom.unauthorized('Authorization code redirect_uri differs from provided redirect_uri'));
         }
 
-        createBearer(request.auth.credentials.client_id, props.user, props.scope).then(function(bearer) {
+        var hasRefresh = includes(trimValues(props.scope), 'offline_access');
+
+        createBearer(request.auth.credentials.client_id, props.user, props.scope, hasRefresh).then(function(bearer) {
           var id_token = createIdToken(server, request.auth.credentials.client_id, props.user);
-          reply({
+          var result = {
             access_token: bearer.bearer,
             id_token: id_token,
             token_type: 'Bearer',
             expires_in: bearer.expires
-          });
+          }
+          if (hasRefresh) result.refresh_token = bearer.refresh;
+          reply(result);
+        });
+      });
+    });
+  },
+
+  refresh_token: function(server, request, reply) {
+    if (!request.payload.refresh_token) {
+      return reply(Boom.badRequest('refresh_token must be provided'));
+    }
+    if (!request.payload.scope || !includes(trimValues(request.payload.scope), 'openid')) {
+      return reply(Boom.badRequest('Request must include openid scope'));
+    }
+    redis.get('yoshimi.oauth.refresh_token.' + request.payload.refresh_token).then(function(bearer) {
+      Promise.props({
+        client: redis.get('yoshimi.oauth.token.' + bearer + '.client'),
+        user: redis.get('yoshimi.oauth.token.' + bearer + '.user'),
+        scope: redis.get('yoshimi.oauth.token.' + bearer + '.scope')
+      }).then(function(props) {
+        if (request.auth.credentials.client_id !== props.client) {
+          return reply(Boom.unauthorized('refresh_token does not belong to client'));
+        }
+        if (_.difference(trimValues(request.payload.scope), trimValues(props.scope)).length > 0) {
+          return reply(Boom.unauthorized('Requested scopes are broader than originally issued'));
+        }
+        Promise.all([
+          redis.del('yoshimi.oauth.token.' + bearer + '.client'),
+          redis.del('yoshimi.oauth.token.' + bearer + '.user'),
+          redis.del('yoshimi.oauth.token.' + bearer + '.scope'),
+          redis.del('yoshimi.oauth.refresh_token.' + request.payload.refresh_token)
+        ]).then(function() {
+          createBearer(request.auth.credentials.client_id, props.user, props.scope, true).then(function(bearer) {
+            var id_token = createIdToken(server, request.auth.credentials.client_id, props.user);
+            reply({
+              access_token: bearer.bearer,
+              refresh_token: bearer.refresh,
+              id_token: id_token,
+              token_type: 'Bearer',
+              expires_in: bearer.expires
+            });
+          })
         });
       });
     });
@@ -171,13 +231,11 @@ module.exports = function(server) {
     method: 'GET',
     path: '/oauth/authorize',
     handler: function(request, reply) {
-      var OAuthClient = request.server.plugins['hapi-mongo-models'].OAuthClient;
+      if (!request.query.scope || !includes(trimValues(request.query.scope), 'openid')) {
+        return reply(Boom.badRequest('Request must include openid scope'));
+      }
       var scopes = trimValues(request.query.scope);
       checkClient(request.query.client_id, request.query.redirect_uri).then(function(client) {
-        if (!includes(scopes, 'openid')) {
-          return reply(Boom.badRequest('Request must include openid scope'));
-        }
-
         var flow = matchFlow(request.query.response_type);
         if (!flow) {
           return reply(Boom.badRequest('Invalid response_type'));
@@ -217,10 +275,12 @@ module.exports = function(server) {
       auth: 'basic',
       validate: {
         payload: {
-          grant_type: Joi.string().required().valid(['authorization_code']),
+          grant_type: Joi.string().required().valid(['authorization_code', 'refresh_token']),
           code: Joi.string(),
           redirect_uri: Joi.string(),
-          client_id: Joi.string()
+          client_id: Joi.string(),
+          scope: Joi.string(),
+          refresh_token: Joi.string()
         }
       }
     }
