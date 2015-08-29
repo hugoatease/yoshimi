@@ -25,7 +25,24 @@ server.register(require('hapi-auth-cookie'), function(err) {
     redirectTo: '/login',
     appendNext: true
   })
-})
+});
+
+server.register(require('hapi-auth-basic'), function(err) {
+  server.auth.strategy('simple', 'basic', {
+    validateFunc: function(request, username, password, callback) {
+      var OAuthClient = request.server.plugins['hapi-mongo-models'].OAuthClient;
+      OAuthClient.findOne({client_id: username, client_secret: password}, function(err, client) {
+        if (err) return callback(err);
+        if (!client) {
+          callback(null, false);
+        }
+        else {
+          callback(null, true, {client_id: username, client_secret: password});
+        }
+      });
+    }
+  })
+});
 
 server.register({
   register: require('hapi-mongo-models'),

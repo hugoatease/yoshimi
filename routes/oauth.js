@@ -6,6 +6,9 @@ var fs = require('fs');
 var path = require('path');
 var url = require('url');
 var includes = require('array-includes');
+var uid = require('uid-safe');
+
+var redis = require('then-redis').createClient();
 
 var key = fs.readFileSync(path.join(__dirname, '..', 'yoshimi.pem'));
 var OAuthClient = require('../models/oauthClient');
@@ -24,16 +27,35 @@ function checkClient(client_id, redirect_uri) {
   }.bind(this));
 }
 
-var flows = {
-  implicit: function(request, reply) {
-    var id_token = jwt.sign({}, key, {
-      algorithm: 'RS256',
-      expiresInSeconds: 3600 * 24 * 15,
-      issuer: server.info.uri,
-      subject: request.auth.credentials.username,
-      audience: request.query.client_id
-    });
+function createIdToken(request) {
+  return jwt.sign({}, key, {
+    algorithm: 'RS256',
+    expiresInSeconds: 3600 * 24 * 15,
+    issuer: server.info.uri,
+    subject: request.auth.credentials.username,
+    audience: request.query.client_id
+  });
+}
 
+var flows = {
+  code: function(request, reply) {
+    uid(16).then(function(code) {
+      Promise.all([
+        redis.set('yoshimi.oauth.' + request.query.client_id + '.' + code + '.user', request.auth.credentials._id),
+        redis.expire('yoshimi.oauth.' + request.query.client_id + '.' + code + '.user', 60),
+        redis.set('yoshimi.oauth.' + request.query.client_id + '.' + code + '.redirect_uri', request.query.redirect_uri),
+        redis.expire('yoshimi.oauth.' + request.query.client_id + '.' + code + '.redirect_uri', 60)
+      ]).then(function() {
+        var redirect_uri = url.parse(request.query.redirect_uri);
+        if (!redirect_uri.query) redirect_uri.query = {};
+        redirect_uri.query.code = code;
+        reply.redirect(url.format(redirect_uri));
+      })
+    })
+  },
+
+  implicit: function(request, reply) {
+    var id_token = createIdToken(request);
     var redirect_uri = url.parse(request.query.redirect_uri);
     if (!redirect_uri.query) redirect_uri.query = {};
     redirect_uri.query.access_token = id_token;
@@ -42,6 +64,38 @@ var flows = {
     redirect_uri.query.expires_in = 3600 * 24 * 15;
 
     reply.redirect(url.format(redirect_uri));
+  }
+}
+
+var grants = {
+  authorization_code: function(request, reply) {
+    if (!request.payload.redirect_uri) {
+      return reply(new Error('redirect_uri must be provided'));
+    }
+    Promise.props({
+      user: redis.get('yoshimi.oauth.' + request.query.client_id + '.' + code + '.user'),
+      storedRedirect: redis.get('yoshimi.oauth.' + request.query.client_id + '.' + code + '.redirect_uri')
+    }).then(function(props) {
+      Promise.all([
+        redis.del('yoshimi.oauth.' + request.query.client_id + '.' + code + '.user'),
+        redis.del('yoshimi.oauth.' + request.query.client_id + '.' + code + '.redirect_uri')
+      ]).then(function() {
+        if (!props.user) {
+          return reply(new Error('Invalid authorization code'));
+        }
+        if (props.storedRedirect !== request.query.redirect_uri) {
+          return reply(new Error('Authorization code redirect_uri differs from provided redirect_uri'));
+        }
+
+        var id_token = createIdToken(request);
+        reply({
+          access_token: id_token,
+          id_token: id_token,
+          token_type: 'JWT',
+          expires_in: 3600 * 24 * 15
+        })
+      });
+    });
   }
 }
 
@@ -101,6 +155,28 @@ module.exports = function(server) {
           response_type: Joi.string().required().valid(['code', 'token']),
           client_id: Joi.string().required(),
           redirect_uri: Joi.string().required().uri({scheme: ['http', 'https']})
+        }
+      }
+    }
+  });
+
+  server.route({
+    method: 'POST',
+    path: '/oauth/token',
+    handler: function(request, reply) {
+      if (!grants[request.payload.grant_type]) {
+        return reply(new Error('Unknown grant_type ' + request.payload.grant_type));
+      }
+      grants[request.payload.grant_type](request, reply);
+    },
+    config: {
+      auth: 'simple',
+      validate: {
+        payload: {
+          grant_type: Joi.string().required(),
+          code: Joi.string(),
+          redirect_uri: Joi.string(),
+          client_id: Joi.string()
         }
       }
     }
