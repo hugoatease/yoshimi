@@ -119,6 +119,7 @@ server.register({
   console.log(err);
 })
 
+require('./methods')(server);
 require('./routes')(server);
 
 server.start(function() {
