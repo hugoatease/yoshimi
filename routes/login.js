@@ -32,7 +32,7 @@ module.exports = function(server) {
             return reply.redirect('/login');
           }
 
-          request.auth.session.set(result);
+          request.auth.session.set(result._id);
           if (request.session.get('login_redirect')) {
             reply.redirect(request.session.get('login_redirect'));
           }

@@ -9,7 +9,7 @@ module.exports = function(server) {
     path: '/api/apps',
     handler: function(request, reply) {
       var OAuthClient = request.server.plugins['hapi-mongo-models'].OAuthClient;
-      OAuthClient.find({owner: request.auth.credentials._id}, function(err, result) {
+      OAuthClient.find({owner: request.auth.credentials}, function(err, result) {
         reply(result);
       })
     },
@@ -30,7 +30,7 @@ module.exports = function(server) {
         var client = request.payload;
         client.client_id = props.client_id;
         client.client_secret = props.client_secret;
-        client.owner = request.auth.credentials._id;
+        client.owner = request.auth.credentials;
         OAuthClient.insertOne(client, function(err, result) {
           reply(result);
         })
@@ -54,7 +54,7 @@ module.exports = function(server) {
     path: '/api/apps/{id}',
     handler: function(request, reply) {
       var OAuthClient = request.server.plugins['hapi-mongo-models'].OAuthClient;
-      OAuthClient.findOne({_id: OAuthClient.ObjectId(request.params.id), owner: request.auth.credentials._id}, function(err, result) {
+      OAuthClient.findOne({_id: OAuthClient.ObjectId(request.params.id), owner: request.auth.credentials}, function(err, result) {
         if (!result) {
           reply(Boom.notFound())
         }
@@ -73,9 +73,12 @@ module.exports = function(server) {
     path: '/api/apps/{id}',
     handler: function(request, reply) {
       var OAuthClient = request.server.plugins['hapi-mongo-models'].OAuthClient;
-      OAuthClient.deleteOne({_id: OAuthClient.ObjectId(request.params.id), owner: request.auth.credentials._id}, function(err) {
+      OAuthClient.deleteOne({_id: OAuthClient.ObjectId(request.params.id), owner: request.auth.credentials}, function(err) {
         reply(204);
       });
+    },
+    config: {
+      auth: 'session'
     }
   })
 
@@ -84,7 +87,7 @@ module.exports = function(server) {
     path: '/api/apps/{id}',
     handler: function(request, reply) {
       var OAuthClient = request.server.plugins['hapi-mongo-models'].OAuthClient;
-      OAuthClient.updateOne({_id: OAuthClient.ObjectId(request.params.id), owner: request.auth.credentials._id}, {$set: request.payload}, function(err) {
+      OAuthClient.updateOne({_id: OAuthClient.ObjectId(request.params.id), owner: request.auth.credentials}, {$set: request.payload}, function(err) {
         if (err) return reply(err);
         reply(200);
       })

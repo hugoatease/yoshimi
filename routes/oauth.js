@@ -93,7 +93,7 @@ var flows = {
   code: function(server, request, reply) {
     uid(16).then(function(code) {
       Promise.all([
-        redis.set('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.user', request.auth.credentials._id),
+        redis.set('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.user', request.auth.credentials),
         redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.user', 60),
         redis.set('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.redirect_uri', request.query.redirect_uri),
         redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.redirect_uri', 60),
@@ -109,8 +109,8 @@ var flows = {
   },
 
   implicit: function(server, request, reply) {
-    createBearer(request.query.client_id, request.auth.credentials._id, request.query.scope).then(function(bearer) {
-      var id_token = createIdToken(server, request.query.client_id, request.auth.credentials._id);
+    createBearer(request.query.client_id, request.auth.credentials, request.query.scope).then(function(bearer) {
+      var id_token = createIdToken(server, request.query.client_id, request.auth.credentials);
       var redirect_uri = url.parse(request.query.redirect_uri);
       if (!redirect_uri.query) redirect_uri.query = {};
       redirect_uri.query.access_token = bearer.bearer;

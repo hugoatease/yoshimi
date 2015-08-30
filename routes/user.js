@@ -7,7 +7,7 @@ module.exports = function(server) {
     path: '/api/user',
     handler: function(request, reply) {
       var User = request.server.plugins['hapi-mongo-models'].User;
-      User.findById(request.auth.credentials._id, function(err, user) {
+      User.findById(request.auth.credentials, function(err, user) {
         if (err) return reply(err);
         reply(_.pick(user, [
           'username', 'email', 'admin', 'email_verified', 'given_name',
@@ -25,7 +25,7 @@ module.exports = function(server) {
     path: '/api/user',
     handler: function() {
       var User = request.server.plugins['hapi-mongo-models'].User;
-      User.findByIdAndUpdate(request.auth.credentials._id, {$set: request.payload}, function(err, user) {
+      User.findByIdAndUpdate(request.auth.credentials, {$set: request.payload}, function(err, user) {
         if (err) return reply(err);
         reply(_.pick(user, [
           'username', 'email', 'admin', 'email_verified', 'given_name',
