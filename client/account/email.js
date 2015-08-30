@@ -23,7 +23,7 @@ module.exports = React.createClass({
   },
 
   toggle: function() {
-    this.setState({editing: !this.state.editing});
+    this.setState({editing: !this.state.editing, error: null});
   },
 
   submit: function(ev) {
