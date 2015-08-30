@@ -6,9 +6,16 @@ var DefaultRoute = Router.DefaultRoute;
 var App = require('./app');
 var Account = require('./account');
 
+var Apps = require('./apps/list');
+var AppCreate = require('./apps/create');
+var AppDetail = require('./apps/detail');
+
 var routes = (
   <Route handler={App}>
     <DefaultRoute name="account" handler={Account} />
+    <Route name="apps" path="apps" handler={Apps}/>
+    <Route name="app-create" path="apps/create" handler={AppCreate}/>
+    <Route name="app-detail" path="apps/:id" handler={AppDetail}/>
   </Route>
 );
 
