@@ -2,6 +2,7 @@ var Joi = require('joi');
 var jwt = require('jsonwebtoken');
 var url = require('url');
 var bcrypt = require('bcrypt');
+var config = require('config');
 
 module.exports = function(server) {
   server.route({
@@ -26,12 +27,12 @@ module.exports = function(server) {
           request.session.flash('error', 'Email address is not associated with any user');
           return reply.redirect('/password_recovery');
         }
-        var token = jwt.sign({}, 'OsYAL0FLiEYeAC5OP05X21kqlWf9k9cT2TP4m3xgE9M=', {
+        var token = jwt.sign({}, config.get('secret'), {
           algorithm: 'HS256',
           subject: user._id,
           issuer: server.info.uri,
           audience: server.info.uri,
-          expiresInSeconds: 3600 * 48
+          expiresInSeconds: config.get('expirations.account_recovery')
         });
         var Mailer = request.server.plugins.mailer;
         var verification_url = url.parse(server.info.uri);
@@ -40,7 +41,7 @@ module.exports = function(server) {
         Mailer.sendMail({
           from: 'noreply@musicpicker.net',
           to: user.email,
-          subject: 'Yoshimi - Password recovery',
+          subject: config.get('name') + ' - Password recovery',
           html: {path: 'emails/recovery.hbs'},
           context: {url: url.format(verification_url)}
         }, function() {
@@ -68,7 +69,7 @@ module.exports = function(server) {
         return reply.redirect('/password_recovery?token=' + request.payload.token);
       }
 
-      jwt.verify(request.payload.token, 'OsYAL0FLiEYeAC5OP05X21kqlWf9k9cT2TP4m3xgE9M=', {
+      jwt.verify(request.payload.token, config.get('secret'), {
         issuer: server.info.uri,
         audience: server.info.uri,
       }, function(err, decoded) {

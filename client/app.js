@@ -15,7 +15,7 @@ module.exports = React.createClass({
     return (
       <div className="row">
         <div className="col-md-3">
-          <h3>Yoshimi</h3><hr />
+          <h3>/* @echo APPNAME */</h3><hr />
           <ul className="nav nav-pills nav-stacked">
             {account}
             {apps}

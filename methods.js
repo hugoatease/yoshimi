@@ -1,10 +1,11 @@
 var jwt = require('jsonwebtoken');
 var url = require('url');
+var config = require('config');
 
 function createMailToken(server, user_id, email) {
   return jwt.sign({
     email: email
-  }, 'OsYAL0FLiEYeAC5OP05X21kqlWf9k9cT2TP4m3xgE9M=', {
+  }, config.get('secret'), {
     algorithm: 'HS256',
     subject: user_id,
     issuer: server.info.uri,
@@ -23,7 +24,7 @@ module.exports = function(server) {
       Mailer.sendMail({
         from: 'noreply@musicpicker.net',
         to: email,
-        subject: 'Yoshimi - Email validation',
+        subject: config.get('name') + ' - Email validation',
         html: {path: 'emails/validation.hbs'},
         context: {url: url.format(verification_url)}
       }, function() {

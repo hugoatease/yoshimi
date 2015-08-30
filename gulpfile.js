@@ -8,6 +8,8 @@ var reactify = require('reactify');
 var source = require('vinyl-source-stream');
 var buffer = require('vinyl-buffer');
 var uglify = require('gulp-uglify');
+var preprocessify = require('preprocessify');
+var config = require('config');
 
 gulp.task('default', ['build']);
 gulp.task('build', ['app', 'styles']);
@@ -15,7 +17,7 @@ gulp.task('build', ['app', 'styles']);
 gulp.task('app', function() {
   return browserify({
     entries: ['./client/yoshimi.js'],
-    transform: [reactify],
+    transform: [reactify, preprocessify({APPNAME: config.get('name')})],
     standalone: 'yoshimi'
   }).bundle()
     .pipe(source('yoshimi.js'))

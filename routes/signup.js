@@ -4,6 +4,7 @@ var Boom = require('boom');
 var bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 var url = require('url');
+var config = require('config');
 
 module.exports = function(server) {
   server.route({
@@ -69,7 +70,7 @@ module.exports = function(server) {
     method: 'GET',
     path: '/email_verification',
     handler: function(request, reply) {
-      jwt.verify(request.query.token, 'OsYAL0FLiEYeAC5OP05X21kqlWf9k9cT2TP4m3xgE9M=', {
+      jwt.verify(request.query.token, config.get('secret'), {
         issuer: server.info.uri,
         audience: server.info.uri
       }, function(err, data) {

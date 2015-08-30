@@ -8,10 +8,11 @@ var url = require('url');
 var includes = require('array-includes');
 var uid = require('uid-safe');
 var _ = require('lodash');
+var config = require('config');
 
 var redis = require('then-redis').createClient();
 
-var key = fs.readFileSync(path.join(__dirname, '..', 'yoshimi.pem'));
+var key = config.get('key');
 var OAuthClient = require('../models/oauthClient');
 
 var scopeClaims = {
@@ -50,20 +51,20 @@ function createBearer(client_id, user_id, scope, refresh) {
         redis.set('yoshimi.oauth.token.' + bearer + '.client', client_id),
         redis.set('yoshimi.oauth.token.' + bearer + '.user', user_id),
         redis.set('yoshimi.oauth.token.' + bearer + '.scope', scope),
-        redis.expire('yoshimi.oauth.token.' + bearer + '.client', 3600 * 24 * 15),
-        redis.expire('yoshimi.oauth.token.' + bearer + '.client', 3600 * 24 * 15),
-        redis.expire('yoshimi.oauth.token.' + bearer + '.client', 3600 * 24 * 15)
+        redis.expire('yoshimi.oauth.token.' + bearer + '.client', config.get('expirations.bearer')),
+        redis.expire('yoshimi.oauth.token.' + bearer + '.client', config.get('expirations.bearer')),
+        redis.expire('yoshimi.oauth.token.' + bearer + '.client', config.get('expirations.bearer'))
       ]).then(function() {
         if (refresh) {
           uid(16).then(function(refresh_token) {
             Promise.all([
               redis.set('yoshimi.oauth.refresh_token.' + refresh_token, bearer),
-              redis.expire('yoshimi.oauth.refresh_token.' + refresh_token, 3600 * 24 * 15)
+              redis.expire('yoshimi.oauth.refresh_token.' + refresh_token, config.get('expirations.bearer'))
             ]).then(function() {
               resolve({
                 bearer: bearer,
                 refresh: refresh_token,
-                expires: 3600 * 24 * 15
+                expires: config.get('expirations.bearer')
               })
             });
           });
@@ -71,7 +72,7 @@ function createBearer(client_id, user_id, scope, refresh) {
         else {
           resolve({
             bearer: bearer,
-            expires: 3600 * 24 * 15
+            expires: config.get('expirations.bearer')
           })
         }
       });
@@ -82,7 +83,7 @@ function createBearer(client_id, user_id, scope, refresh) {
 function createIdToken(server, client_id, user_id) {
   return jwt.sign({}, key, {
     algorithm: 'RS256',
-    expiresInSeconds: 3600 * 24 * 15,
+    expiresInSeconds: config.get('expirations.id_token'),
     issuer: server.info.uri,
     subject: user_id,
     audience: client_id
@@ -94,11 +95,11 @@ var flows = {
     uid(16).then(function(code) {
       Promise.all([
         redis.set('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.user', request.auth.credentials),
-        redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.user', 60),
+        redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.user', config.get('expirations.access_code')),
         redis.set('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.redirect_uri', request.query.redirect_uri),
-        redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.redirect_uri', 60),
+        redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.redirect_uri', config.get('expirations.access_code')),
         redis.set('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.scope', request.query.scope),
-        redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.scope', 60)
+        redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.scope', config.get('expirations.access_code'))
       ]).then(function() {
         var redirect_uri = url.parse(request.query.redirect_uri);
         if (!redirect_uri.query) redirect_uri.query = {};

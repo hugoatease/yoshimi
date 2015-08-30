@@ -1,5 +1,6 @@
 var Hapi = require('hapi');
 var Promise = require('bluebird');
+var config = require('config');
 
 var server = new Hapi.Server();
 server.connection({port: 3000});
@@ -9,8 +10,8 @@ server.register({
   options: {
     name: 'yoshimi',
     cookieOptions: {
-      password: 'OsYAL0FLiEYeAC5OP05X21kqlWf9k9cT2TP4m3xgE9M=',
-      isSecure: false
+      password: config.get('secret'),
+      isSecure: config.get('secure')
     }
   }
 }, function(err) {
@@ -21,7 +22,7 @@ server.register({
 server.register(require('hapi-auth-cookie'), function(err) {
   server.auth.strategy('session', 'cookie', {
     cookie: 'yoshimi-auth',
-    password: 'OsYAL0FLiEYeAC5OP05X21kqlWf9k9cT2TP4m3xgE9M=',
+    password: config.get('secret'),
     isSecure: false,
     redirectTo: '/login',
     appendNext: true
@@ -70,9 +71,7 @@ server.register(require('hapi-auth-bearer-token'), function(err) {
 server.register({
   register: require('hapi-mongo-models'),
   options: {
-    mongodb: {
-      url: 'mongodb://localhost:27017/yoshimi'
-    },
+    mongodb: config.get('mongodb'),
     autoIndex: true,
     models: {
       User: './models/user',
@@ -101,18 +100,19 @@ var viewsOptions = {
   engines: {hbs: require('handlebars')},
   relativeTo: __dirname,
   path: 'views',
-  layout: true,
-  isCached: false
+  layout: true
 }
 
 server.register(require('vision'), function(err) {
   server.views(viewsOptions);
 });
 
+var transportOptions = config.has('mail.options') ? config.get('mail.options') : {};
 server.register({
   register: require('hapi-mailer'),
   options: {
-    views: viewsOptions
+    views: viewsOptions,
+    transport: require(config.get('mail.transport'))(transportOptions)
   }
 }, function(err) {
   if (!err) return;

@@ -1,0 +1,41 @@
+name: Yoshimi
+secret: OsYAL0FLiEYeAC5OP05X21kqlWf9k9cT2TP4m3xgE9M=
+secure: false
+mongodb:
+  url: mongodb://localhost:27017/yoshimi
+mail:
+  transport: nodemailer-direct-transport
+expirations:
+  account_recovery: 172800
+  bearer: 1296000
+  id_token: 1296000
+  access_code: 60
+
+key: |
+  -----BEGIN RSA PRIVATE KEY-----
+  MIIEowIBAAKCAQEA36Vlve94mJ5HTb8TmZE68pW7GgrXq54Clajepf6/dwCUDuD9
+  4FfTVE7O6h6qfLSx4HE+bYdp9FxaGOWAGrKGlAFUjt3Tug9OLfu31bpg/D6wxFty
+  q9brtNa89AbzGxs/kfJ6OncwHpwkTFgoTY9hOTNy4gcYWCYg2k5io6z0FbQ4LGn2
+  MyJJdzJskb97XsIXx4+ZSxv9/B9QVm7s+FTPVc8BG+BGs/O6UBr2vJv7YFGG+NDf
+  FokPDZgW8hzQcYiK2lsvHEbuYdmEyJK4zE0YX6SbW6Ax4YqJ5wjfm7beNzVHr6G4
+  aPaIAX2AS/SfV6cQt7LLeD7TofAm6d0VVuLbewIDAQABAoIBACW1U4RE3kaNWWRo
+  dTuNWy0Pxe5MKbUL/U+Sm4fNfiboeA5SLTwoUr+CUizzYreIF/3J2kbJcDn9YEuW
+  VpUpyLsnxkQYbtyOPBZQvNxSgovFXjSdXqZOpItnMZDLoy3M2FkZUzaMZhajKROe
+  QZ1iMXhdjl9B5v7l3uAwGz2Rqc4GtjfxmEtLQbahOp8Ds+oyaZ5qhRvTb1+PB4mE
+  aPGMn5eM30FkMfDieUmb1LwKTVLQitdonYix0bferbMQZjv5fMe75MGT/eeZhwLv
+  61+G5myS0EF5FKOaQT7pKhflkkaxez/9F7T+hXq3R+NSPJc6wA4a1tsDd5hSyvKh
+  XBdmtxECgYEA+WPK7Fcmq3VdiUGMdUdOGEYQxVThxD4dEOCLfFZxPXO8dvzbduZG
+  O1+ELkexSnoduA7vGFmu6nVl/6wxXlnppB5+GYVdGxmrwp7dzzL5hXRvTlQYRN9t
+  /DcKIalPXFjeZcbeoq5sd8deSMeAQnYq+tEwOBjOs0ePrQS/OuzDiLcCgYEA5ZLs
+  aYUpa0XsBsD4hxcTKZriOishFZP5R6YrqlH4rA7p7nnww6OA3xUq6FaLHfIRND/A
+  w5pY/4iqD9G1qswlz5WfK2zqq9xHLp88kt94mLkLlJBTqFL90FYYktS2Ii5Rpd8d
+  0MfJKRSG2poi6IAC778+ZRZ0ASDR67Tr11a8V10CgYEAwCtJfnxZa91wSgecd/KO
+  Ft5GpggWP+Ws+AhO82yYrcW0/+swIZqnm7CqZg8QaldW9zFqw9S3mCsGgdDp6c5W
+  3wQwHvJJIEzTsZBBUxvwcgmaizz5xnh0g9jVkcKpSHuiQ8LOY4UMR+/0kxhHmO79
+  h3ASO+fBvxvxdl0mDf3LXlkCgYBCmTDEG8E8QXiLLQfsCKGifDAMt95NKDQ0uNwJ
+  +OWu5FSwvec+mfwUu0tLQ2/wK/0ZrzT4iZov5zGOjUOqXLbLVZhrPJmHacuslr03
+  zmRpyaS2YHgkaI8BFTjjv5lmqRE+kU9Q9eRBapcEa5qc4CX57vzmznCwsxiyzDVu
+  rtbMcQKBgEZqZfI26Wf6kjTsrYEmm9y2Sq9we7TfyxdKtnbCCOyKWXdF3sx5fwtw
+  1XIesZqFtAilhoCVjnTuyfSX0D69EdHSfzHiXftKrOIsUZ6hAkKToVkdi6Fa21Yx
+  ZE46UMc01bskEe/GOVV4DcpU2Wowl4R9ygPDvB47ORhgqEWD94Fk
+  -----END RSA PRIVATE KEY-----
