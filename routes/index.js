@@ -4,4 +4,5 @@ module.exports = function(server) {
   require('./apps')(server);
   require('./oauth')(server);
   require('./recovery')(server);
+  require('./user')(server);
 }

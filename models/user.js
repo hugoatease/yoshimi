@@ -1,4 +1,5 @@
 var Joi = require('joi');
+Joi.phone = require('joi-phone');
 var ObjectAssign = require('object-assign');
 var BaseModel = require('hapi-mongo-models').BaseModel;
 
@@ -14,7 +15,11 @@ User.schema = Joi.object().keys({
   password: Joi.string().required(),
   email: Joi.string().email().required(),
   admin: Joi.boolean().default(false),
-  email_verified: Joi.boolean().default(false)
+  email_verified: Joi.boolean().default(false),
+  given_name: Joi.string(),
+  family_name: Joi.string(),
+  birthdate: Joi.date().iso(),
+  phone_number: Joi.phone.e164()
 });
 
 module.exports = User;
