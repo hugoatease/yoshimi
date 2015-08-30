@@ -14,15 +14,12 @@ function createMailToken(server, user_id, email) {
 
 module.exports = function(server) {
   server.method('sendValidation', function (server, request, user_id, email) {
-    console.log('VALIDATION');
     return new Promise(function(resolve, reject) {
       var mail_token = createMailToken(server, user_id, email);
       var verification_url = url.parse(server.info.uri);
       verification_url.pathname = '/email_verification';
       verification_url.query = {token: mail_token};
       var Mailer = server.plugins.mailer;
-      console.log(mail_token);
-      console.log(Mailer);
       Mailer.sendMail({
         from: 'noreply@musicpicker.net',
         to: email,

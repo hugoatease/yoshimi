@@ -56,17 +56,27 @@ module.exports = function(server) {
       if (request.payload.password !== request.payload.password_confirm) {
         return reply(Boom.badRequest("Password confirmation doesn't match wanted password"));
       }
-      bcrypt.hash(request.payload.password, 10, function(err, hashed) {
-        User.findByIdAndUpdate(request.auth.credentials, {$set: {password: hashed}}, function(err, result) {
+      User.findById(request.auth.credentials, function(err, user) {
+        if (err) return reply(err);
+        bcrypt.compare(request.payload.current_password, user.password, function(err, match) {
           if (err) return reply(err);
-          reply('Password has been successfuly updated');
+          if (!match) {
+            return reply(Boom.badRequest('Provided current password is invalid'));
+          }
+          bcrypt.hash(request.payload.password, 10, function(err, hashed) {
+            User.findByIdAndUpdate(request.auth.credentials, {$set: {password: hashed}}, function(err, result) {
+              if (err) return reply(err);
+              reply('Password has been successfuly updated');
+            })
+          });
         })
-      });
+      })
     },
     config: {
       auth: 'session',
       validate: {
         payload: {
+          current_password: Joi.string().min(6).required(),
           password: Joi.string().min(6).required(),
           password_confirm: Joi.string().min(6).required()
         }
