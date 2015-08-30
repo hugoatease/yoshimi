@@ -1,5 +1,7 @@
 var _ = require('lodash');
 var Joi = require('joi');
+var Boom = require('boom');
+var bcrypt = require('bcrypt');
 
 module.exports = function(server) {
   server.route({
@@ -23,7 +25,7 @@ module.exports = function(server) {
   server.route({
     method: 'PUT',
     path: '/api/user',
-    handler: function() {
+    handler: function(request, reply) {
       var User = request.server.plugins['hapi-mongo-models'].User;
       User.findByIdAndUpdate(request.auth.credentials, {$set: request.payload}, function(err, user) {
         if (err) return reply(err);
@@ -41,6 +43,32 @@ module.exports = function(server) {
           family_name: Joi.string(),
           birthdate: Joi.date().iso(),
           phone_number: Joi.phone.e164()
+        }
+      }
+    }
+  });
+
+  server.route({
+    method: 'POST',
+    path: '/api/user/password',
+    handler: function(request, reply) {
+      var User = request.server.plugins['hapi-mongo-models'].User;
+      if (request.payload.password !== request.payload.password_confirm) {
+        return reply(Boom.badRequest("Password confirmation doesn't match wanted password"));
+      }
+      bcrypt.hash(request.payload.password, 10, function(err, hashed) {
+        User.findByIdAndUpdate(request.auth.credentials, {$set: {password: hashed}}, function(err, result) {
+          if (err) return reply(err);
+          reply('Password has been successfuly updated');
+        })
+      });
+    },
+    config: {
+      auth: 'session',
+      validate: {
+        payload: {
+          password: Joi.string().min(6).required(),
+          password_confirm: Joi.string().min(6).required()
         }
       }
     }
