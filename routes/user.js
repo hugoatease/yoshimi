@@ -72,5 +72,33 @@ module.exports = function(server) {
         }
       }
     }
+  });
+
+  server.route({
+    method: 'POST',
+    path: '/api/user/email',
+    handler: function(request, reply) {
+      var User = request.server.plugins['hapi-mongo-models'].User;
+      User.count({email: request.payload.email, email_verified: true}, function(err, conflicts) {
+        if (err) return reply(err);
+        if (conflicts > 0) {
+          return reply(Boom.unauthorized('Email address is already associated to another user'));
+        }
+        User.findByIdAndUpdate(request.auth.credentials, {$set: {email: request.payload.email, email_verified: false}}, function(err, user) {
+          if (err) return reply(err);
+          server.methods.sendValidation(server, request, user._id, user.email).then(function() {
+            reply(user);
+          })
+        });
+      });
+    },
+    config: {
+      auth: 'session',
+      validate: {
+        payload: {
+          email: Joi.string().email().required()
+        }
+      }
+    }
   })
 }
