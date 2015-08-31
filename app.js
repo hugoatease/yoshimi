@@ -47,7 +47,7 @@ server.register(require('hapi-auth-basic'), function(err) {
 });
 
 server.register(require('hapi-auth-bearer-token'), function(err) {
-  var redis = require('then-redis').createClient();
+  var redis = require('then-redis').createClient(config.get('redis'));
   server.auth.strategy('bearer', 'bearer-access-token', {
     validateFunc: function(token, callback) {
       Promise.props({

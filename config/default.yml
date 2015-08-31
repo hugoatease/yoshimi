@@ -4,6 +4,9 @@ prefix: /
 secure: false
 mongodb:
   url: mongodb://localhost:27017/yoshimi
+redis:
+  host: 127.0.0.1
+  port: 6379
 mail:
   transport: nodemailer-direct-transport
 expirations:

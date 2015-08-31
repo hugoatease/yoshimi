@@ -10,7 +10,7 @@ var uid = require('uid-safe');
 var _ = require('lodash');
 var config = require('config');
 
-var redis = require('then-redis').createClient();
+var redis = require('then-redis').createClient(config.get('redis'));
 
 var key = config.get('key');
 var OAuthClient = require('../models/oauthClient');
