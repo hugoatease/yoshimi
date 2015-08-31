@@ -25,7 +25,7 @@ module.exports = function(server) {
         if (err) return reply(err);
         if (!user) {
           request.session.flash('error', 'Email address is not associated with any user');
-          return reply.redirect('/password_recovery');
+          return reply.redirect(request.to('password_recovery'));
         }
         var token = jwt.sign({}, config.get('secret'), {
           algorithm: 'HS256',
@@ -35,15 +35,13 @@ module.exports = function(server) {
           expiresInSeconds: config.get('expirations.account_recovery')
         });
         var Mailer = request.server.plugins.mailer;
-        var verification_url = url.parse(server.info.uri);
-        verification_url.pathname = '/password_recovery';
-        verification_url.query = {token: token};
+        var verification_url = request.to('password_recovery', {query: {token: token}});
         Mailer.sendMail({
           from: 'noreply@musicpicker.net',
           to: user.email,
           subject: config.get('name') + ' - Password recovery',
           html: {path: 'emails/recovery.hbs'},
-          context: {url: url.format(verification_url)}
+          context: {url: verification_url}
         }, function() {
           reply.view('recovery', {
             success: 'Recovery email has been sent.'
@@ -52,6 +50,7 @@ module.exports = function(server) {
       });
     },
     config: {
+      id: 'password_recovery',
       validate: {
         payload: {
           email: Joi.string().email().required()
@@ -66,7 +65,7 @@ module.exports = function(server) {
     handler: function(request, reply) {
       if (request.payload.password !== request.payload.password_confirm) {
         request.session.flash('error', "Password confirmation doesn't match wanted password");
-        return reply.redirect('/password_recovery?token=' + request.payload.token);
+        return reply.redirect(request.to('password_recovery', {query: {token: request.payload.token}}));
       }
 
       jwt.verify(request.payload.token, config.get('secret'), {
@@ -97,7 +96,7 @@ module.exports = function(server) {
           error.data.details.forEach(function(item) {
             request.session.flash('error', item.message);
           }.bind(this));
-          reply.redirect('/password_recovery?token=' + request.payload.token);
+          reply.redirect(request.to('password_recovery', {query: {token: request.payload.token}}));
         }
       }
     }

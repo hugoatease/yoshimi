@@ -23,14 +23,14 @@ module.exports = function(server) {
     handler: function(request, reply) {
       if (request.payload.password !== request.payload.password_confirm) {
         request.session.flash('error', "Password confirmation doesn't match wanted password");
-        return reply.redirect('/signup');
+        return reply.redirect(request.to('signup'));
       }
 
       var User = request.server.plugins['hapi-mongo-models'].User;
       User.count({$or: [{username: request.payload.username}, {email: request.payload.email, email_verified: true}]}, function(err, count) {
         if (err || count > 0) {
           request.session.flash('error', "Username or email is already registered");
-          return reply.redirect('/signup');
+          return reply.redirect(request.to('signup'));
         }
 
         bcrypt.hash(request.payload.password, 10, function(err, hashed) {
@@ -49,6 +49,7 @@ module.exports = function(server) {
 
     },
     config: {
+      id: 'signup',
       validate: {
         payload: {
           username: Joi.string().lowercase().required(),
@@ -60,7 +61,7 @@ module.exports = function(server) {
           error.data.details.forEach(function(item) {
             request.session.flash('error', item.message);
           }.bind(this));
-          reply.redirect('/signup');
+          reply.redirect(request.to('signup'));
         }
       }
     }
@@ -97,6 +98,7 @@ module.exports = function(server) {
       })
     },
     config: {
+      id: 'email_verification',
       validate: {
         query: {
           token: Joi.string().required()

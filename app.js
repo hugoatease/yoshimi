@@ -20,11 +20,12 @@ server.register({
 });
 
 server.register(require('hapi-auth-cookie'), function(err) {
+  var urljoin = require('url-join');
   server.auth.strategy('session', 'cookie', {
     cookie: 'yoshimi-auth',
     password: config.get('secret'),
     isSecure: false,
-    redirectTo: '/login',
+    redirectTo: urljoin(config.get('prefix'), 'login'),
     appendNext: true
   })
 });
@@ -118,6 +119,11 @@ server.register({
   if (!err) return;
   console.log(err);
 })
+
+server.register(require('hapi-to'), function(err) {
+  if (!err) return;
+  console.log(err);
+});
 
 var routeOptions = {};
 if (config.get('prefix') !== '/') {

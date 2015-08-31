@@ -23,13 +23,13 @@ module.exports = function(server) {
       User.findOne({username: request.payload.username}, function(err, result) {
         if (err || !result) {
           request.session.flash('error', 'Username does not exist');
-          return reply.redirect('/login');
+          return reply.redirect(request.to('login'));
         }
 
         bcrypt.compare(request.payload.password, result.password, function(err, match) {
           if (err || !match) {
             request.session.flash('error', 'Incorrect password for ' + result.username);
-            return reply.redirect('/login');
+            return reply.redirect(request.to('login'));
           }
 
           request.auth.session.set(result._id);
@@ -37,12 +37,13 @@ module.exports = function(server) {
             reply.redirect(request.session.get('login_redirect'));
           }
           else {
-            reply.redirect('/');
+            reply.redirect(request.to('index'));
           }
         })
       })
     },
     config: {
+      id: 'login',
       auth: {
         mode: 'try',
         strategy: 'session'

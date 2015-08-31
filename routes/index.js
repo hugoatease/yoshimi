@@ -13,6 +13,7 @@ module.exports.register = function(server, options, next) {
       reply.view('app');
     },
     config: {
+      id: 'index',
       auth: 'session'
     }
   })
