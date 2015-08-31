@@ -5,21 +5,59 @@ var config = require('config');
 var server = new Hapi.Server();
 server.connection({port: 3000});
 
-server.register({
-  register: require('yar'),
-  options: {
-    name: 'yoshimi',
-    cookieOptions: {
-      password: config.get('secret'),
-      isSecure: config.get('secure')
-    }
+var transportOptions = config.has('mail.options') ? config.get('mail.options') : {};
+var routeOptions = {};
+if (config.get('prefix') !== '/') {
+  routeOptions.routes = {
+    prefix: config.get('prefix')
   }
-}, function(err) {
-  if (!err) return;
-  console.log(err);
-});
+}
 
-server.register(require('hapi-auth-cookie'), function(err) {
+var viewsOptions = {
+  engines: {hbs: require('handlebars')},
+  relativeTo: __dirname,
+  path: 'views',
+  layout: true
+}
+
+server.register([
+  {
+    register: require('yar'),
+    options: {
+      name: 'yoshimi',
+      cookieOptions: {
+        password: config.get('secret'),
+        isSecure: config.get('secure')
+      }
+    }
+  },
+  require('hapi-auth-cookie'),
+  require('hapi-auth-basic'),
+  require('hapi-auth-bearer-token'),
+  {
+    register: require('hapi-mongo-models'),
+    options: {
+      mongodb: config.get('mongodb'),
+      autoIndex: true,
+      models: {
+        User: './models/user',
+        OAuthClient: './models/oauthClient'
+      }
+    }
+  },
+  require('inert'),
+  require('vision'),
+  {
+    register: require('hapi-mailer'),
+    options: {
+      views: viewsOptions,
+      transport: require(config.get('mail.transport'))(transportOptions)
+    }
+  },
+  require('hapi-to')
+], function(err) {
+  if (err) return console.log(err);
+
   var urljoin = require('url-join');
   server.auth.strategy('session', 'cookie', {
     cookie: 'yoshimi-auth',
@@ -27,10 +65,8 @@ server.register(require('hapi-auth-cookie'), function(err) {
     isSecure: false,
     redirectTo: urljoin(config.get('prefix'), 'login'),
     appendNext: true
-  })
-});
+  });
 
-server.register(require('hapi-auth-basic'), function(err) {
   server.auth.strategy('basic', 'basic', {
     validateFunc: function(request, username, password, callback) {
       var OAuthClient = request.server.plugins['hapi-mongo-models'].OAuthClient;
@@ -44,10 +80,8 @@ server.register(require('hapi-auth-basic'), function(err) {
         }
       });
     }
-  })
-});
+  });
 
-server.register(require('hapi-auth-bearer-token'), function(err) {
   var redis = require('then-redis').createClient(config.get('redis'));
   server.auth.strategy('bearer', 'bearer-access-token', {
     validateFunc: function(token, callback) {
@@ -66,26 +100,8 @@ server.register(require('hapi-auth-bearer-token'), function(err) {
         callback(err);
       });
     }
-  })
-});
+  });
 
-server.register({
-  register: require('hapi-mongo-models'),
-  options: {
-    mongodb: config.get('mongodb'),
-    autoIndex: true,
-    models: {
-      User: './models/user',
-      OAuthClient: './models/oauthClient'
-    }
-  }
-
-}, function(err) {
-  if (!err) return;
-  console.log(err);
-});
-
-server.register(require('inert'), function(err) {
   server.route({
     method: 'GET',
     path: '/static/{param*}',
@@ -94,47 +110,14 @@ server.register(require('inert'), function(err) {
         path: 'static/'
       }
     }
-  })
-});
+  });
 
-var viewsOptions = {
-  engines: {hbs: require('handlebars')},
-  relativeTo: __dirname,
-  path: 'views',
-  layout: true
-}
-
-server.register(require('vision'), function(err) {
   server.views(viewsOptions);
-});
 
-var transportOptions = config.has('mail.options') ? config.get('mail.options') : {};
-server.register({
-  register: require('hapi-mailer'),
-  options: {
-    views: viewsOptions,
-    transport: require(config.get('mail.transport'))(transportOptions)
-  }
-}, function(err) {
-  if (!err) return;
-  console.log(err);
-})
-
-server.register(require('hapi-to'), function(err) {
-  if (!err) return;
-  console.log(err);
-});
-
-var routeOptions = {};
-if (config.get('prefix') !== '/') {
-  routeOptions.routes = {
-    prefix: config.get('prefix')
-  }
-}
-
-server.register(require('./routes'), routeOptions, function(err) {
-  require('./methods')(server);
-  server.start(function() {
-    console.log('Server running at: ', server.info.uri);
+  server.register(require('./routes'), routeOptions, function(err) {
+    require('./methods')(server);
+    server.start(function() {
+      console.log('Server running at: ', server.info.uri);
+    });
   });
 });
