@@ -3,6 +3,7 @@ var RouteHandler = require('react-router').RouteHandler;
 var Link = require('react-router').Link;
 var State = require('react-router').State;
 var config = require('./config');
+var urljoin = require('url-join');
 
 module.exports = React.createClass({
   mixins: [State],
@@ -13,6 +14,8 @@ module.exports = React.createClass({
     var appsClass = (this.isActive('apps') || this.isActive('app-create') || this.isActive('app-detail')) ? 'active' : null;
     var apps = <li className={appsClass}><Link to="apps">Apps</Link></li>;
 
+    var logoutLink = urljoin(config.PREFIX, 'logout');
+
     return (
       <div className="row">
         <div className="col-md-3">
@@ -21,6 +24,10 @@ module.exports = React.createClass({
             {account}
             {apps}
           </ul>
+          <div className="text-center">
+            <br />
+            <a href={logoutLink} className="btn btn-danger">Log out</a>
+          </div>
         </div>
         <div className="col-md-9">
           <RouteHandler />

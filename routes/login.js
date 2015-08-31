@@ -55,4 +55,16 @@ module.exports = function(server) {
       }
     }
   })
+
+  server.route({
+    method: 'GET',
+    path: '/logout',
+    handler: function(request, reply) {
+      request.auth.session.clear();
+      reply.redirect(request.to('index'));
+    },
+    config: {
+      auth: 'session'
+    }
+  });
 }
