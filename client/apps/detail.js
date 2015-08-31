@@ -2,6 +2,8 @@ var React = require('react');
 var request = require('superagent');
 var Navigation = require('react-router').Navigation;
 var Link = require('react-router').Link;
+var config = require('../config');
+var urljoin = require('url-join');
 
 module.exports = React.createClass({
 	mixins: [Navigation],
@@ -18,7 +20,7 @@ module.exports = React.createClass({
 	},
 
 	componentDidMount: function() {
-		request.get('/api/apps/' + this.props.params.id).end(function(err, res) {
+		request.get(urljoin(config.PREFIX, '/api/apps/', this.props.params.id)).end(function(err, res) {
 			var app = res.body;
 			this.setState(app);
 		}.bind(this));
@@ -27,7 +29,7 @@ module.exports = React.createClass({
 	updateDescription: function(ev) {
 		ev.preventDefault();
 		var description = React.findDOMNode(this.refs.description).value;
-		request.put('/api/apps/' + this.props.params.id).send({
+		request.put(urljoin(config.PREFIX, '/api/apps/', this.props.params.id)).send({
 			description: description
 		}).end(function(err, res) {
 			var app = res.body;
@@ -44,7 +46,7 @@ module.exports = React.createClass({
 
 	updateRedirect: function(ev) {
 		ev.preventDefault();
-		request.put('/api/apps/' + this.props.params.id).send({
+		request.put(urljoin(config.PREFIX, '/api/apps/', this.props.params.id)).send({
 			redirect_uri: this.state.redirect_uri
 		}).end(function(err, res) {
 			var app = res.body;
@@ -68,7 +70,7 @@ module.exports = React.createClass({
 	},
 
 	delete: function() {
-		request.del('/api/apps/' + this.props.params.id).end(function() {
+		request.del(urljoin(config.PREFIX, '/api/apps/', this.props.params.id)).end(function() {
 			this.transitionTo('apps');
 		}.bind(this));
 	},

@@ -2,6 +2,8 @@ var React = require('react');
 var request = require('superagent');
 var Navigation = require('react-router').Navigation;
 var Link = require('react-router').Link;
+var config = require('../config');
+var urljoin = require('url-join');
 
 module.exports = React.createClass({
 	mixins: [Navigation],
@@ -10,7 +12,7 @@ module.exports = React.createClass({
 		ev.preventDefault();
 		name = React.findDOMNode(this.refs.name).value;
 
-		request.post('/api/apps').send({
+		request.post(urljoin(config.PREFIX, '/api/apps')).send({
 			name: name
 		}).end(function() {
 			this.transitionTo('apps');

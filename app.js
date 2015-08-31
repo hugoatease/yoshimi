@@ -119,9 +119,16 @@ server.register({
   console.log(err);
 })
 
-require('./methods')(server);
-require('./routes')(server);
+var routeOptions = {};
+if (config.get('prefix') !== '/') {
+  routeOptions.routes = {
+    prefix: config.get('prefix')
+  }
+}
 
-server.start(function() {
-  console.log('Server running at: ', server.info.uri);
+server.register(require('./routes'), routeOptions, function(err) {
+  require('./methods')(server);
+  server.start(function() {
+    console.log('Server running at: ', server.info.uri);
+  });
 });

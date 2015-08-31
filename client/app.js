@@ -2,6 +2,7 @@ var React = require('react');
 var RouteHandler = require('react-router').RouteHandler;
 var Link = require('react-router').Link;
 var State = require('react-router').State;
+var config = require('./config');
 
 module.exports = React.createClass({
   mixins: [State],
@@ -15,7 +16,7 @@ module.exports = React.createClass({
     return (
       <div className="row">
         <div className="col-md-3">
-          <h3>/* @echo APPNAME */</h3><hr />
+          <h3>{config.NAME}</h3><hr />
           <ul className="nav nav-pills nav-stacked">
             {account}
             {apps}

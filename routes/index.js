@@ -1,4 +1,4 @@
-module.exports = function(server) {
+module.exports.register = function(server, options, next) {
   require('./signup')(server);
   require('./login')(server);
   require('./apps')(server);
@@ -16,4 +16,10 @@ module.exports = function(server) {
       auth: 'session'
     }
   })
+
+  next();
+}
+
+module.exports.register.attributes = {
+  name: 'routes'
 }

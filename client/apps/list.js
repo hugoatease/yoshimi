@@ -2,6 +2,8 @@ var React = require('react');
 var request = require('superagent');
 var Navigation = require('react-router').Navigation;
 var Link = require('react-router').Link;
+var config = require('../config');
+var urljoin = require('url-join');
 
 module.exports = React.createClass({
 	mixins: [Navigation],
@@ -13,7 +15,7 @@ module.exports = React.createClass({
 	},
 
 	componentDidMount: function() {
-		request.get('/api/apps').end(function(err, res) {
+		request.get(urljoin(config.PREFIX, '/api/apps')).end(function(err, res) {
 			var apps = res.body;
 			this.setState({apps: apps});
 		}.bind(this));

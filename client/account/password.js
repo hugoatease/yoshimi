@@ -1,5 +1,7 @@
 var React = require('react');
 var request = require('superagent');
+var config = require('../config');
+var urljoin = require('url-join');
 
 module.exports = React.createClass({
   getInitialState: function() {
@@ -11,7 +13,7 @@ module.exports = React.createClass({
 
   submit: function(ev) {
     ev.preventDefault();
-    request.post('/api/user/password')
+    request.post(urljoin(config.PREFIX, '/api/user/password'))
       .send({
         current_password: React.findDOMNode(this.refs.current_password).value,
         password: React.findDOMNode(this.refs.password).value,

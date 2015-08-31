@@ -1,5 +1,7 @@
 var React = require('react');
 var request = require('superagent');
+var config = require('../config')
+var urljoin = require('url-join');
 
 module.exports = React.createClass({
   getInitialState: function() {
@@ -20,7 +22,7 @@ module.exports = React.createClass({
   },
 
   fetchUser: function() {
-    request.get('/api/user')
+    request.get(urljoin(config.PREFIX, '/api/user'))
       .end(function(err, res) {
         this.setState(res.body);
       }.bind(this));
@@ -31,7 +33,7 @@ module.exports = React.createClass({
   },
 
   submit: function() {
-    request.put('/api/user')
+    request.put(urljoin(config.PREFIX, '/api/user'))
       .send({
         given_name: React.findDOMNode(this.refs.given_name).value,
         family_name: React.findDOMNode(this.refs.family_name).value

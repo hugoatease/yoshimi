@@ -17,7 +17,7 @@ gulp.task('build', ['app', 'styles']);
 gulp.task('app', function() {
   return browserify({
     entries: ['./client/yoshimi.js'],
-    transform: [reactify, preprocessify({APPNAME: config.get('name')})],
+    transform: [preprocessify({NAME: config.get('name'), PREFIX: config.get('prefix')}), reactify],
     standalone: 'yoshimi'
   }).bundle()
     .pipe(source('yoshimi.js'))
