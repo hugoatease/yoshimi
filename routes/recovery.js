@@ -72,9 +72,12 @@ module.exports = function(server) {
         issuer: server.info.uri,
         audience: server.info.uri,
       }, function(err, decoded) {
-        if (err) return reply(err);
-        var User = request.server.plugins['hapi-mongo-models'].User;
+        if (err) {
+          request.session.flash('error', "Provided recovery token is invalid");
+          return reply.redirect(request.to('password_recovery', {query: {token: request.payload.token}}));
+        }
 
+        var User = request.server.plugins['hapi-mongo-models'].User;
         bcrypt.hash(request.payload.password, 10, function(err, hashed) {
           User.findByIdAndUpdate(decoded.sub, {$set: {password: hashed}}, function(err, result) {
             if (err) return reply(err);
