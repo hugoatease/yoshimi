@@ -11,57 +11,116 @@ module.exports = function(server) {
     method: 'GET',
     path: '/signup',
     handler: function(request, reply) {
-      reply.view('signup', {
-        errors: request.session.flash('error')
-      });
+      if (!config.get('email_validation_mandatory')) {
+        reply.view('signup', {
+          errors: request.session.flash('error')
+        });
+      }
+      else {
+        if (!request.query.email_token) {
+          reply.view('signup', {
+            errors: request.session.flash('error'),
+            email_only: true
+          });
+        }
+        else {
+          reply.view('signup', {
+            errors: request.session.flash('error'),
+            email_token: request.query.email_token
+          });
+        }
+      }
     }
   });
+
+  function registerUser(server, request, reply, email, verified) {
+    var User = request.server.plugins['hapi-mongo-models'].User;
+    User.count({$or: [{username: request.payload.username}, {email: email, email_verified: true}]}, function(err, count) {
+      if (err || count > 0) {
+        request.session.flash('error', "Username or email is already registered");
+        return reply.redirect(request.to('signup'));
+      }
+
+      bcrypt.hash(request.payload.password, 10, function(err, hashed) {
+        User.insertOne({
+          username: request.payload.username,
+          password: hashed,
+          email: email,
+          email_verified: verified
+        }, function(err, results) {
+          server.methods.sendValidation(server, request, results[0]._id, results[0].email).then(function() {
+            reply('Signup success');
+          });
+        });
+      });
+    });
+  }
 
   server.route({
     method: 'POST',
     path: '/signup',
     handler: function(request, reply) {
-      if (request.payload.password !== request.payload.password_confirm) {
-        request.session.flash('error', "Password confirmation doesn't match wanted password");
-        return reply.redirect(request.to('signup'));
-      }
-
       var User = request.server.plugins['hapi-mongo-models'].User;
-      User.count({$or: [{username: request.payload.username}, {email: request.payload.email, email_verified: true}]}, function(err, count) {
-        if (err || count > 0) {
-          request.session.flash('error', "Username or email is already registered");
+
+      if (config.get('email_validation_mandatory') && request.payload.email) {
+        User.count({email: request.payload.email, email_verified: true}, function(err, count) {
+          if (err || count > 0) {
+            return reply('Email address is already used by a registered user');
+          }
+          var token = jwt.sign({email: request.payload.email}, config.get('secret'), {
+            expiresInSeconds: config.get('expirations.email_validation'),
+            issuer: server.info.uri,
+            audience: server.info.uri
+          });
+          var verification_url = request.to('signup', {query: {email_token: token}});
+          var Mailer = server.plugins.mailer;
+          Mailer.sendMail({
+            from: 'noreply@musicpicker.net',
+            to: request.payload.email,
+            subject: config.get('name') + ' - Email validation',
+            html: {path: 'emails/validation.hbs'},
+            context: {url: verification_url}
+          });
+          return reply('Check your inbox in order to continue signup.');
+        });
+      }
+      else {
+        if (request.payload.password !== request.payload.password_confirm) {
+          request.session.flash('error', "Password confirmation doesn't match wanted password");
           return reply.redirect(request.to('signup'));
         }
 
-        bcrypt.hash(request.payload.password, 10, function(err, hashed) {
-          User.insertOne({
-            username: request.payload.username,
-            password: hashed,
-            email: request.payload.email,
-            email_verified: false
-          }, function(err, results) {
-            server.methods.sendValidation(server, request, results[0]._id, results[0].email).then(function() {
-              reply('Signup success');
-            })
-          })
-        })
-      })
-
+        if (config.get('email_validation_mandatory')) {
+          jwt.verify(request.payload.email_token, config.get('secret'), {
+            issuer: server.info.uri,
+            audience: server.info.uri
+          }, function(err, data) {
+            if (err) {
+              return reply('Incorrect email validation token');
+            }
+            registerUser(server, request, reply, data.email, true);
+          });
+        }
+        else {
+          registerUser(server, request, reply, request.payload.email, false);
+        }
+      }
     },
     config: {
       id: 'signup',
       validate: {
         payload: {
-          username: Joi.string().lowercase().required(),
-          password: Joi.string().min(6).required(),
-          password_confirm: Joi.string().min(6).required(),
-          email: Joi.string().email()
+          username: Joi.string().lowercase(),
+          password: Joi.string().min(6),
+          password_confirm: Joi.string().min(6),
+          email: Joi.string().email(),
+          email_token: Joi.string()
         },
         failAction: function(request, reply, source, error) {
           error.data.details.forEach(function(item) {
             request.session.flash('error', item.message);
           }.bind(this));
-          reply.redirect(request.to('signup'));
+          reply.redirect(request.to('signup', {query: request.query}));
         }
       }
     }

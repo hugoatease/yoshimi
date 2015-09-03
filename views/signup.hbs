@@ -10,6 +10,7 @@
       <b>Error.</b> {{{this}}}
     </div>
     {{/each}}
+    {{#unless email_only}}
     <form method="post">
       <div class="form-group">
         <label for="username">Username</label>
@@ -23,6 +24,20 @@
         <label for="password_confirm">Password confirmation</label>
         <input type="password" class="form-control" id="password_confirm" name="password_confirm" placeholder="Password confirmation" />
       </div>
+      {{#unless email_token}}
+      <div class="form-group">
+        <label for="email">Email address</label>
+        <input type="email" class="form-control" id="email" name="email" placeholder="Email address" />
+      </div>
+      {{else}}
+      <input type="hidden" name="email_token" value="{{email_token}}" />
+      {{/unless}}
+      <div class="text-center">
+        <button type="submit" class="btn btn-primary">Sign Up</button>
+      </div>
+    </form>
+    {{else}}
+    <form method="post">
       <div class="form-group">
         <label for="email">Email address</label>
         <input type="email" class="form-control" id="email" name="email" placeholder="Email address" />
@@ -31,5 +46,6 @@
         <button type="submit" class="btn btn-primary">Sign Up</button>
       </div>
     </form>
+    {{/unless}}
   </div>
 </div>

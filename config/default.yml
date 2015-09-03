@@ -14,6 +14,8 @@ expirations:
   bearer: 1296000
   id_token: 1296000
   access_code: 60
+  email_validation: 172800
+email_validation_mandatory: false
 
 key: |
   -----BEGIN RSA PRIVATE KEY-----
