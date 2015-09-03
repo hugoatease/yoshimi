@@ -282,6 +282,9 @@ module.exports = function(server) {
           client_id: Joi.string().required(),
           redirect_uri: Joi.string().required().uri({scheme: ['http', 'https']}),
           state: Joi.string()
+        },
+        failAction: function(request, reply, source, error) {
+          return oauthError(request, reply, 'invalid_request');
         }
       }
     }
@@ -307,6 +310,9 @@ module.exports = function(server) {
           client_id: Joi.string(),
           scope: Joi.string(),
           refresh_token: Joi.string()
+        },
+        failAction: function(request, reply, source, error) {
+          return oauthError(request, reply, 'invalid_request');
         }
       }
     }
