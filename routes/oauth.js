@@ -104,6 +104,9 @@ var flows = {
         var redirect_uri = url.parse(request.query.redirect_uri);
         if (!redirect_uri.query) redirect_uri.query = {};
         redirect_uri.query.code = code;
+        if (request.query.state) {
+          redirect_uri.query.state = request.query.state;
+        }
         reply.redirect(url.format(redirect_uri));
       })
     })
@@ -118,6 +121,10 @@ var flows = {
       redirect_uri.query.id_token = id_token;
       redirect_uri.query.token_type = 'Bearer';
       redirect_uri.query.expires_in = bearer.expires;
+
+      if (request.query.state) {
+        redirect_uri.query.state = request.query.state;
+      }
 
       reply.redirect(url.format(redirect_uri));
     });
@@ -258,7 +265,8 @@ module.exports = function(server) {
           scope: Joi.string().required(),
           response_type: Joi.string().required(),
           client_id: Joi.string().required(),
-          redirect_uri: Joi.string().required().uri({scheme: ['http', 'https']})
+          redirect_uri: Joi.string().required().uri({scheme: ['http', 'https']}),
+          state: Joi.string()
         }
       }
     }
