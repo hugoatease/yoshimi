@@ -3,7 +3,7 @@ var Promise = require('bluebird');
 var config = require('config');
 
 var server = new Hapi.Server();
-server.connection({port: 3000});
+server.connection({port: config.get('port'), host: config.get('host')});
 
 var transportOptions = config.has('mail.options') ? config.get('mail.options') : {};
 var routeOptions = {};

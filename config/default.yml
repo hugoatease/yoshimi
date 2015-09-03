@@ -1,6 +1,8 @@
 name: Yoshimi
 secret: OsYAL0FLiEYeAC5OP05X21kqlWf9k9cT2TP4m3xgE9M=
 prefix: /
+host: example.com
+port: 80
 secure: false
 mongodb:
   url: mongodb://localhost:27017/yoshimi
