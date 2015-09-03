@@ -5,6 +5,7 @@ module.exports.register = function(server, options, next) {
   require('./oauth')(server);
   require('./recovery')(server);
   require('./user')(server);
+  require('./discovery')(server);
 
   server.route({
     method: 'GET',

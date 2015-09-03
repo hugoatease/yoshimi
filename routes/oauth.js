@@ -251,6 +251,7 @@ module.exports = function(server) {
       });
     },
     config: {
+      id: 'authorization',
       auth: 'session',
       validate: {
         query: {
@@ -273,6 +274,7 @@ module.exports = function(server) {
       grants[request.payload.grant_type](server, request, reply);
     },
     config: {
+      id: 'token',
       auth: 'basic',
       validate: {
         payload: {
@@ -307,6 +309,7 @@ module.exports = function(server) {
       })
     },
     config: {
+      id: 'userinfo',
       auth: 'bearer'
     }
   })
