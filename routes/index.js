@@ -17,7 +17,17 @@ module.exports.register = function(server, options, next) {
       id: 'index',
       auth: 'session'
     }
-  })
+  });
+
+  server.route({
+    method: 'GET',
+    path: '/static/{param*}',
+    handler: {
+      directory: {
+        path: 'static/'
+      }
+    }
+  });
 
   next();
 }

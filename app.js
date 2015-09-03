@@ -102,16 +102,6 @@ server.register([
     }
   });
 
-  server.route({
-    method: 'GET',
-    path: '/static/{param*}',
-    handler: {
-      directory: {
-        path: 'static/'
-      }
-    }
-  });
-
   server.views(viewsOptions);
 
   server.register(require('./routes'), routeOptions, function(err) {
