@@ -319,7 +319,7 @@ module.exports = function(server) {
   });
 
   server.route({
-    method: 'GET',
+    method: ['GET', 'POST'],
     path: '/oauth/userinfo',
     handler: function(request, reply) {
       var User = request.server.plugins['hapi-mongo-models'].User;
