@@ -20,7 +20,8 @@ module.exports = function(server) {
         if (!request.query.email_token) {
           reply.view('signup', {
             errors: request.session.flash('error'),
-            email_only: true
+            email_only: true,
+            validation_sent: request.query.validation_sent
           });
         }
         else {
@@ -52,7 +53,15 @@ module.exports = function(server) {
           email_verified: verified
         }, function(err, results) {
           server.methods.sendValidation(server, request, results[0]._id, results[0].email).then(function() {
-            reply('Signup success');
+            var login_redirect = request.session.get('login_redirect');
+            if (login_redirect) {
+              request.auth.session.set(results[0]._id);
+              request.session.clear('login_redirect');
+              reply.redirect(login_redirect);
+            }
+            else {
+              reply.redirect(request.to('index'));
+            }
           });
         });
       });
@@ -68,7 +77,8 @@ module.exports = function(server) {
       if (config.get('email_validation_mandatory') && request.payload.email) {
         User.count({email: request.payload.email, email_verified: true}, function(err, count) {
           if (err || count > 0) {
-            return reply('Email address is already used by a registered user');
+            request.session.flash('error', "Email address is already used by a registered user");
+            return reply.redirect(request.to('signup'));
           }
           var token = jwt.sign({email: request.payload.email}, config.get('secret'), {
             expiresInSeconds: config.get('expirations.email_validation'),
@@ -84,7 +94,7 @@ module.exports = function(server) {
             html: {path: 'emails/validation.hbs'},
             context: {url: verification_url}
           });
-          return reply('Check your inbox in order to continue signup.');
+          return reply.redirect(request.to('signup', {query: {validation_sent: true}}));
         });
       }
       else {
@@ -99,7 +109,8 @@ module.exports = function(server) {
             audience: server.info.uri
           }, function(err, data) {
             if (err) {
-              return reply('Incorrect email validation token');
+              request.session.flash('error', "Incorrect email validation token");
+              return reply.redirect(request.to('signup'));
             }
             registerUser(server, request, reply, data.email, true);
           });

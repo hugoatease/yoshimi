@@ -35,8 +35,11 @@ module.exports = function(server) {
           }
 
           request.auth.session.set(result._id);
-          if (request.session.get('login_redirect')) {
-            reply.redirect(request.session.get('login_redirect'));
+
+          var login_redirect = request.session.get('login_redirect');
+          if (login_redirect) {
+            request.session.clear('login_redirect');
+            reply.redirect(login_redirect);
           }
           else {
             reply.redirect(request.to('index'));

@@ -10,42 +10,48 @@
       <b>Error.</b> {{{this}}}
     </div>
     {{/each}}
-    {{#unless email_only}}
-    <form method="post">
-      <div class="form-group">
-        <label for="username">Username</label>
-        <input type="text" class="form-control" id="username" name="username" placeholder="Username" />
-      </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" class="form-control" id="password" name="password" placeholder="Password" />
-      </div>
-      <div class="form-group">
-        <label for="password_confirm">Password confirmation</label>
-        <input type="password" class="form-control" id="password_confirm" name="password_confirm" placeholder="Password confirmation" />
-      </div>
-      {{#unless email_token}}
-      <div class="form-group">
-        <label for="email">Email address</label>
-        <input type="email" class="form-control" id="email" name="email" placeholder="Email address" />
-      </div>
+    {{#unless validation_sent}}
+      {{#unless email_only}}
+      <form method="post">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" class="form-control" id="username" name="username" placeholder="Username" />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" class="form-control" id="password" name="password" placeholder="Password" />
+        </div>
+        <div class="form-group">
+          <label for="password_confirm">Password confirmation</label>
+          <input type="password" class="form-control" id="password_confirm" name="password_confirm" placeholder="Password confirmation" />
+        </div>
+        {{#unless email_token}}
+        <div class="form-group">
+          <label for="email">Email address</label>
+          <input type="email" class="form-control" id="email" name="email" placeholder="Email address" />
+        </div>
+        {{else}}
+        <input type="hidden" name="email_token" value="{{email_token}}" />
+        {{/unless}}
+        <div class="text-center">
+          <button type="submit" class="btn btn-primary">Sign Up</button>
+        </div>
+      </form>
       {{else}}
-      <input type="hidden" name="email_token" value="{{email_token}}" />
+      <form method="post">
+        <div class="form-group">
+          <label for="email">Email address</label>
+          <input type="email" class="form-control" id="email" name="email" placeholder="Email address" />
+        </div>
+        <div class="text-center">
+          <button type="submit" class="btn btn-primary">Sign Up</button>
+        </div>
+      </form>
       {{/unless}}
-      <div class="text-center">
-        <button type="submit" class="btn btn-primary">Sign Up</button>
-      </div>
-    </form>
     {{else}}
-    <form method="post">
-      <div class="form-group">
-        <label for="email">Email address</label>
-        <input type="email" class="form-control" id="email" name="email" placeholder="Email address" />
-      </div>
-      <div class="text-center">
-        <button type="submit" class="btn btn-primary">Sign Up</button>
-      </div>
-    </form>
+    <div class="alert alert-info">
+      <b>Validation mail sent.</b> Please check your inbox and click the link to confirm your email address.
+    </div>
     {{/unless}}
   </div>
 </div>
