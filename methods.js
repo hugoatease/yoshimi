@@ -8,8 +8,8 @@ function createMailToken(server, user_id, email) {
   }, config.get('secret'), {
     algorithm: 'HS256',
     subject: user_id,
-    issuer: server.info.uri,
-    audience: server.info.uri
+    issuer: config.get('issuer_url'),
+    audience: config.get('issuer_url')
   });
 }
 

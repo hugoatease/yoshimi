@@ -1,8 +1,8 @@
 name: Yoshimi
 secret: OsYAL0FLiEYeAC5OP05X21kqlWf9k9cT2TP4m3xgE9M=
 prefix: /
-host: example.com
-port: 80
+port: 3000
+issuer_url: http://example.com
 secure: false
 mongodb:
   url: mongodb://localhost:27017/yoshimi
@@ -10,11 +10,7 @@ redis:
   host: 127.0.0.1
   port: 6379
 mail:
-  transport: nodemailer-mailgun-transport
-  options:
-    auth:
-      api_key: key-1708e9472fe78761013b20882a835a2c
-      domain: wapitisen.fr
+  transport: nodemailer-direct-transport
 expirations:
   account_recovery: 172800
   bearer: 1296000

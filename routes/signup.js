@@ -85,8 +85,8 @@ module.exports = function(server) {
           }
           var token = jwt.sign({email: request.payload.email}, config.get('secret'), {
             expiresInSeconds: config.get('expirations.email_validation'),
-            issuer: server.info.uri,
-            audience: server.info.uri
+            issuer: config.get('issuer_url'),
+            audience: config.get('issuer_url')
           });
           var verification_url = request.to('signup', {query: {email_token: token}});
           var Mailer = server.plugins.mailer;
@@ -108,8 +108,8 @@ module.exports = function(server) {
 
         if (config.get('email_validation_mandatory')) {
           jwt.verify(request.payload.email_token, config.get('secret'), {
-            issuer: server.info.uri,
-            audience: server.info.uri
+            issuer: config.get('issuer_url'),
+            audience: config.get('issuer_url')
           }, function(err, data) {
             if (err) {
               request.session.flash('error', "Incorrect email validation token");
@@ -147,8 +147,8 @@ module.exports = function(server) {
     path: '/email_verification',
     handler: function(request, reply) {
       jwt.verify(request.query.token, config.get('secret'), {
-        issuer: server.info.uri,
-        audience: server.info.uri
+        issuer: config.get('issuer_url'),
+        audience: config.get('issuer_url')
       }, function(err, data) {
         if (err) {
           return reply.view('validation', {

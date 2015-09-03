@@ -7,7 +7,7 @@ module.exports = function(server) {
     path: '/.well-known/openid-configuration',
     handler: function(request, reply) {
       var configuration = {
-        issuer: server.info.uri,
+        issuer: config.get('issuer_url'),
         authorization_endpoint: request.to('authorization'),
         token_endpoint: request.to('token'),
         userinfo_endpoint: request.to('userinfo'),

@@ -84,7 +84,7 @@ function createIdToken(server, client_id, user_id) {
   return jwt.sign({}, key, {
     algorithm: 'RS256',
     expiresInSeconds: config.get('expirations.id_token'),
-    issuer: server.info.uri,
+    issuer: config.get('issuer_url'),
     subject: user_id,
     audience: client_id
   });

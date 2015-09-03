@@ -34,8 +34,8 @@ module.exports = function(server) {
         var token = jwt.sign({}, config.get('secret'), {
           algorithm: 'HS256',
           subject: user._id,
-          issuer: server.info.uri,
-          audience: server.info.uri,
+          issuer: config.get('issuer_url'),
+          audience: config.get('issuer_url'),
           expiresInSeconds: config.get('expirations.account_recovery')
         });
         var Mailer = request.server.plugins.mailer;
@@ -74,8 +74,8 @@ module.exports = function(server) {
       }
 
       jwt.verify(request.payload.token, config.get('secret'), {
-        issuer: server.info.uri,
-        audience: server.info.uri,
+        issuer: config.get('issuer_url'),
+        audience: config.get('issuer_url'),
       }, function(err, decoded) {
         if (err) {
           request.session.flash('error', "Provided recovery token is invalid");
