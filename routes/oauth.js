@@ -134,7 +134,7 @@ var flows = {
 var grants = {
   authorization_code: function(server, request, reply) {
     if (!request.payload.redirect_uri) {
-      return reply(Boom.badRequest('redirect_uri must be provided'));
+      return oauthError(request, reply, 'invalid_request', 'redirect_uri must be provided');
     }
     Promise.props({
       user: redis.get('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.user'),
@@ -147,10 +147,10 @@ var grants = {
         redis.del('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.scope')
       ]).then(function() {
         if (!props.user) {
-          return reply(Boom.unauthorized('Invalid authorization code'));
+          return oauthError(request, reply, 'invalid_grant', 'Invalid authorization code');
         }
         if (props.storedRedirect !== request.payload.redirect_uri) {
-          return reply(Boom.unauthorized('Authorization code redirect_uri differs from provided redirect_uri'));
+          return oauthError(request, reply, 'invalid_client', 'Authorization code redirect_uri differs from provided redirect_uri');
         }
 
         var hasRefresh = includes(trimValues(props.scope), 'offline_access');
@@ -172,10 +172,10 @@ var grants = {
 
   refresh_token: function(server, request, reply) {
     if (!request.payload.refresh_token) {
-      return reply(Boom.badRequest('refresh_token must be provided'));
+      return oauthError(request, reply, 'invalid_request', 'refresh_token must be provided');
     }
     if (!request.payload.scope || !includes(trimValues(request.payload.scope), 'openid')) {
-      return reply(Boom.badRequest('Request must include openid scope'));
+      return oauthError(request, reply, 'invalid_scope', 'Request must include openid scope');
     }
     redis.get('yoshimi.oauth.refresh_token.' + request.payload.refresh_token).then(function(bearer) {
       Promise.props({
@@ -184,10 +184,10 @@ var grants = {
         scope: redis.get('yoshimi.oauth.token.' + bearer + '.scope')
       }).then(function(props) {
         if (request.auth.credentials.client_id !== props.client) {
-          return reply(Boom.unauthorized('refresh_token does not belong to client'));
+          return oauthError(request, reply, 'invalid_grant', 'refresh_token does not belong to client');
         }
         if (_.difference(trimValues(request.payload.scope), trimValues(props.scope)).length > 0) {
-          return reply(Boom.unauthorized('Requested scopes are broader than originally issued'));
+          return oauthError(request, reply, 'invalid_scope', 'Requested scopes are broader than originally issued');
         }
         Promise.all([
           redis.del('yoshimi.oauth.token.' + bearer + '.client'),
@@ -234,22 +234,37 @@ function matchFlow(response_type) {
   return null;
 }
 
+function oauthError(request, reply, error, detail) {
+  var redirect_uri = url.parse(request.query.redirect_uri);
+  if (!redirect_uri.query) {
+    redirect_uri.query = {};
+  }
+  redirect_uri.query.error = error;
+  if (detail) {
+    redirect_uri.query.error_description = detail;
+  }
+  if (request.query.state) {
+    redirect_uri.query.state = request.query.state;
+  }
+  reply.redirect(url.format(redirect_uri));
+}
+
 module.exports = function(server) {
   server.route({
     method: 'GET',
     path: '/oauth/authorize',
     handler: function(request, reply) {
       if (!request.query.scope || !includes(trimValues(request.query.scope), 'openid')) {
-        return reply(Boom.badRequest('Request must include openid scope'));
+        return oauthError(request, reply, 'invalid_scope', 'Request must include openid scope');
       }
       var scopes = trimValues(request.query.scope);
       checkClient(request.query.client_id, request.query.redirect_uri).then(function(client) {
         var flow = matchFlow(request.query.response_type);
         if (!flow) {
-          return reply(Boom.badRequest('Invalid response_type'));
+          return oauthError(request, reply, 'invalid_request', 'Invalid response_type');
         }
         if (!flows[flow]) {
-          return reply(Boom.badRequest(flow + ' flow not supported'));
+          return oauthError(request, reply, 'unsupported_response_type', flow + ' flow not supported');
         }
 
         return flows[flow](server, request, reply);
@@ -277,7 +292,7 @@ module.exports = function(server) {
     path: '/oauth/token',
     handler: function(request, reply) {
       if (!grants[request.payload.grant_type]) {
-        return reply(Boom.badRequest('Unknown grant_type ' + request.payload.grant_type));
+        return oauthError(request, reply, 'unsupported_grant_type', 'Unknown grant_type ' + request.payload.grant_type);
       }
       grants[request.payload.grant_type](server, request, reply);
     },
