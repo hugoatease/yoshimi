@@ -11,7 +11,8 @@ module.exports = function(server) {
     handler: function(request, reply) {
       reply.view('recovery', {
         errors: request.session.flash('error'),
-        token: request.query.token
+        token: request.query.token,
+        logo_url: config.get('logo_url')
       });
     },
     config: {
@@ -47,7 +48,8 @@ module.exports = function(server) {
           context: {url: verification_url}
         }, function() {
           reply.view('recovery', {
-            success: 'Recovery email has been sent.'
+            success: 'Recovery email has been sent.',
+            logo_url: config.get('logo_url')
           })
         });
       });
@@ -85,7 +87,8 @@ module.exports = function(server) {
           User.findByIdAndUpdate(decoded.sub, {$set: {password: hashed}}, function(err, result) {
             if (err) return reply(err);
             reply.view('recovery', {
-              success: 'Password has been updated'
+              success: 'Password has been updated',
+              logo_url: config.get('logo_url')
             })
           })
         });

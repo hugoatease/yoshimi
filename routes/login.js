@@ -1,5 +1,6 @@
 var Joi = require('joi');
 var bcrypt = require('bcrypt');
+var config = require('config');
 
 module.exports = function(server) {
   server.route({
@@ -12,7 +13,8 @@ module.exports = function(server) {
       reply.view('login', {
         errors: request.session.flash('error'),
         signup_link: request.to('signup'),
-        recovery_link: request.to('recovery')
+        recovery_link: request.to('recovery'),
+        logo_url: config.get('logo_url')
       });
     }
   })

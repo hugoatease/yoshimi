@@ -16,10 +16,17 @@ module.exports = React.createClass({
 
     var logoutLink = urljoin(config.PREFIX, 'logout');
 
+    if (config.LOGO_URL === 'null') {
+      var branding = <div><h3>{config.NAME}</h3><hr /></div>;
+    }
+    else {
+      var branding = <div id="logo" className="text-center"><img src={config.LOGO_URL} height="100" /></div>
+    }
+
     return (
       <div className="row">
         <div className="col-md-3">
-          <h3>{config.NAME}</h3><hr />
+          {branding}
           <ul className="nav nav-pills nav-stacked">
             {account}
             {apps}

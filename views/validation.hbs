@@ -1,17 +1,23 @@
 <div class="row">
   <div class="col-sm-4 col-sm-offset-4">
-    <div class="text-center">
-      <h3>Email validation </h3>
-      {{#if success}}
-        <div class="alert alert-success">
-          <b>Email validation succeed. </b>
-          You may now login to your services.
-        </div>
-      {{else}}
-        <div class="alert alert-warning">
-          <b>Error. </b>{{error}}
-        </div>
-      {{/if}}
+    <div class="page-header">
+      <div class="text-center">
+        {{#if logo_url}}
+        <img src="{{logo_url}}" height="100" />
+        {{/if}}
+        <h3>Email validation </h3>
+      </div>
     </div>
+
+    {{#if success}}
+      <div class="alert alert-success">
+        <b>Email validation succeed. </b>
+        You may now login to your services.
+      </div>
+    {{else}}
+      <div class="alert alert-warning">
+        <b>Error. </b>{{error}}
+      </div>
+    {{/if}}
   </div>
 </div>

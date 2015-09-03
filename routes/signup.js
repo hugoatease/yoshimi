@@ -13,7 +13,8 @@ module.exports = function(server) {
     handler: function(request, reply) {
       if (!config.get('email_validation_mandatory')) {
         reply.view('signup', {
-          errors: request.session.flash('error')
+          errors: request.session.flash('error'),
+          logo_url: config.get('logo_url')
         });
       }
       else {
@@ -21,13 +22,15 @@ module.exports = function(server) {
           reply.view('signup', {
             errors: request.session.flash('error'),
             email_only: true,
-            validation_sent: request.query.validation_sent
+            validation_sent: request.query.validation_sent,
+            logo_url: config.get('logo_url')
           });
         }
         else {
           reply.view('signup', {
             errors: request.session.flash('error'),
-            email_token: request.query.email_token
+            email_token: request.query.email_token,
+            logo_url: config.get('logo_url')
           });
         }
       }
@@ -150,7 +153,8 @@ module.exports = function(server) {
         if (err) {
           return reply.view('validation', {
             success: false,
-            error: 'Invalid verification token'
+            error: 'Invalid verification token',
+            logo_url: config.get('logo_url')
           })
         }
         var User = request.server.plugins['hapi-mongo-models'].User;
@@ -159,7 +163,8 @@ module.exports = function(server) {
           if (verified > 0) {
             return reply.view('validation', {
               success: false,
-              error: 'Email adress has already been verified'
+              error: 'Email adress has already been verified',
+              logo_url: config.get('logo_url')
             });
           }
           User.findById(data.sub, function(err, user) {
@@ -167,13 +172,15 @@ module.exports = function(server) {
             if (user.email !== data.email) {
               return reply.view('validation', {
                 success: false,
-                error: 'Token email doesn\'t match user email address'
+                error: 'Token email doesn\'t match user email address',
+                logo_url: config.get('logo_url')
               })
             }
             User.updateOne({_id: User.ObjectId(data.sub), email: data.email}, {$set: {email_verified: true}}, function(err, updated) {
               if (err) return reply(err);
               return reply.view('validation', {
-                success: true
+                success: true,
+                logo_url: config.get('logo_url')
               });
             });
           })
