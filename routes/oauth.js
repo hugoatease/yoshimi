@@ -80,7 +80,11 @@ function createBearer(client_id, user_id, scope, refresh) {
   });
 }
 
-function createIdToken(server, client_id, user_id) {
+function createIdToken(server, client_id, user_id, nonce) {
+  payload = {};
+  if (nonce) {
+    payload.nonce = nonce;
+  }
   return jwt.sign({}, key, {
     algorithm: 'RS256',
     expiresInSeconds: config.get('expirations.id_token'),
@@ -99,7 +103,9 @@ var flows = {
         redis.set('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.redirect_uri', request.query.redirect_uri),
         redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.redirect_uri', config.get('expirations.access_code')),
         redis.set('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.scope', request.query.scope),
-        redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.scope', config.get('expirations.access_code'))
+        redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.scope', config.get('expirations.access_code')),
+        redis.set('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.nonce', request.query.nonce),
+        redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.nonce', config.get('expirations.access_code')),
       ]).then(function() {
         var redirect_uri = url.parse(request.query.redirect_uri);
         if (!redirect_uri.query) redirect_uri.query = {};
@@ -113,8 +119,11 @@ var flows = {
   },
 
   implicit: function(server, request, reply) {
+    if (!request.query.nonce) {
+      return oauthError(request, reply, 'invalid_request', 'nonce parameter must be provided');
+    }
     createBearer(request.query.client_id, request.auth.credentials, request.query.scope).then(function(bearer) {
-      var id_token = createIdToken(server, request.query.client_id, request.auth.credentials);
+      var id_token = createIdToken(server, request.query.client_id, request.auth.credentials, nonce);
       var redirect_uri = url.parse(request.query.redirect_uri);
       if (!redirect_uri.query) redirect_uri.query = {};
       redirect_uri.query.access_token = bearer.bearer;
@@ -139,12 +148,14 @@ var grants = {
     Promise.props({
       user: redis.get('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.user'),
       storedRedirect: redis.get('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.redirect_uri'),
-      scope: redis.get('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.scope')
+      scope: redis.get('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.scope'),
+      nonce: redis.get('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.nonce')
     }).then(function(props) {
       Promise.all([
         redis.del('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.user'),
         redis.del('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.redirect_uri'),
-        redis.del('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.scope')
+        redis.del('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.scope'),
+        redis.del('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.nonce')
       ]).then(function() {
         if (!props.user) {
           return oauthError(request, reply, 'invalid_grant', 'Invalid authorization code');
@@ -156,7 +167,7 @@ var grants = {
         var hasRefresh = includes(trimValues(props.scope), 'offline_access');
 
         createBearer(request.auth.credentials.client_id, props.user, props.scope, hasRefresh).then(function(bearer) {
-          var id_token = createIdToken(server, request.auth.credentials.client_id, props.user);
+          var id_token = createIdToken(server, request.auth.credentials.client_id, props.user, props.nonce);
           var result = {
             access_token: bearer.bearer,
             id_token: id_token,
@@ -281,7 +292,8 @@ module.exports = function(server) {
           response_type: Joi.string().required(),
           client_id: Joi.string().required(),
           redirect_uri: Joi.string().required().uri({scheme: ['http', 'https']}),
-          state: Joi.string()
+          state: Joi.string(),
+          nonce: Joi.string()
         },
         failAction: function(request, reply, source, error) {
           return oauthError(request, reply, 'invalid_request');
@@ -318,28 +330,39 @@ module.exports = function(server) {
     }
   });
 
+  function userInfo(request, reply) {
+    var User = request.server.plugins['hapi-mongo-models'].User;
+    User.findById(request.auth.credentials.user_id, function(err, user) {
+      if (err) return err;
+
+      var scopes = trimValues(request.auth.credentials.scope);
+      var result = {
+        sub: user._id
+      }
+      scopes.forEach(function(scope) {
+        _.merge(result, _.pick(user, scopeClaims[scope]));
+      }.bind(this));
+
+      reply(result);
+    })
+  }
+
   server.route({
-    method: ['GET', 'POST'],
+    method: 'GET',
     path: '/oauth/userinfo',
-    handler: function(request, reply) {
-      var User = request.server.plugins['hapi-mongo-models'].User;
-      User.findById(request.auth.credentials.user_id, function(err, user) {
-        if (err) return err;
-
-        var scopes = trimValues(request.auth.credentials.scope);
-        var result = {
-          sub: user._id
-        }
-        scopes.forEach(function(scope) {
-          _.merge(result, _.pick(user, scopeClaims[scope]));
-        }.bind(this));
-
-        reply(result);
-      })
-    },
+    handler: userInfo,
     config: {
       id: 'userinfo',
       auth: 'bearer'
     }
-  })
+  });
+
+  server.route({
+    method: 'POST',
+    path: '/oauth/userinfo',
+    handler: userInfo,
+    config: {
+      auth: 'bearer'
+    }
+  });
 }
