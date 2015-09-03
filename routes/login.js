@@ -11,6 +11,8 @@ module.exports = function(server) {
       }
       reply.view('login', {
         errors: request.session.flash('error'),
+        signup_link: request.to('signup'),
+        recovery_link: request.to('recovery')
       });
     }
   })

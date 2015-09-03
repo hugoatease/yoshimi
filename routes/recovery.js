@@ -13,6 +13,9 @@ module.exports = function(server) {
         errors: request.session.flash('error'),
         token: request.query.token
       });
+    },
+    config: {
+      id: 'recovery'
     }
   });
 

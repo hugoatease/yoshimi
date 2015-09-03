@@ -30,6 +30,9 @@ module.exports = function(server) {
           });
         }
       }
+    },
+    config: {
+      id: 'signup'
     }
   });
 
@@ -107,7 +110,6 @@ module.exports = function(server) {
       }
     },
     config: {
-      id: 'signup',
       validate: {
         payload: {
           username: Joi.string().lowercase(),
