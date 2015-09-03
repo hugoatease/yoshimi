@@ -178,6 +178,8 @@ var grants = {
           reply(result);
         });
       });
+    }).catch(function() {
+      return oauthError(request, reply, 'invalid_grant', 'Invalid authorization code');
     });
   },
 
@@ -218,6 +220,8 @@ var grants = {
           })
         });
       });
+    }).catch(function() {
+      return oauthError(request, reply, 'invalid_grant', 'Invalid refresh token');
     });
   }
 }
