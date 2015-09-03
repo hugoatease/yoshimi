@@ -88,7 +88,7 @@ module.exports = function(server) {
           var verification_url = request.to('signup', {query: {email_token: token}});
           var Mailer = server.plugins.mailer;
           Mailer.sendMail({
-            from: 'noreply@musicpicker.net',
+            from: config.get('server_email'),
             to: request.payload.email,
             subject: config.get('name') + ' - Email validation',
             html: {path: 'emails/validation.hbs'},

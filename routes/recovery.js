@@ -40,7 +40,7 @@ module.exports = function(server) {
         var Mailer = request.server.plugins.mailer;
         var verification_url = request.to('password_recovery', {query: {token: token}});
         Mailer.sendMail({
-          from: 'noreply@musicpicker.net',
+          from: config.get('server_email'),
           to: user.email,
           subject: config.get('name') + ' - Password recovery',
           html: {path: 'emails/recovery.hbs'},

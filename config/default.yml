@@ -15,6 +15,7 @@ expirations:
   id_token: 1296000
   access_code: 60
   email_validation: 172800
+server_email: noreply@example.com
 email_validation_mandatory: false
 
 key: |
