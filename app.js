@@ -7,17 +7,20 @@ server.connection({port: config.get('port')});
 
 var transportOptions = config.has('mail.options') ? config.get('mail.options') : {};
 var routeOptions = {};
-if (config.get('prefix') !== '/') {
-  routeOptions.routes = {
-    prefix: config.get('prefix')
-  }
-}
 
 var viewsOptions = {
   engines: {hbs: require('handlebars')},
   relativeTo: __dirname,
   path: 'views',
-  layout: true
+  layout: true,
+  context: {}
+}
+
+if (config.get('prefix') !== '/') {
+  routeOptions.routes = {
+    prefix: config.get('prefix')
+  }
+  viewsOptions.context.PREFIX = config.get('prefix');
 }
 
 server.register([
