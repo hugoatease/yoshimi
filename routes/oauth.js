@@ -269,6 +269,7 @@ module.exports = function(server) {
 
         return flows[flow](server, request, reply);
       }).catch(function(err) {
+        return oauthError(request, reply, 'invalid_client');
         reply(err);
       });
     },
