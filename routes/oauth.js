@@ -343,8 +343,15 @@ module.exports = function(server) {
       var result = {
         sub: user._id
       }
+
       scopes.forEach(function(scope) {
         _.merge(result, _.pick(user, scopeClaims[scope]));
+      }.bind(this));
+
+      scopes.forEach(function(scope) {
+        scopeClaims[scope].forEach(function(claim) {
+          _.defaults(result, {claim: null});
+        }.bind(this));
       }.bind(this));
 
       reply(result);
