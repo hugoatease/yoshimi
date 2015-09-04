@@ -351,16 +351,6 @@ module.exports = function(server) {
         _.merge(result, _.pick(user, scopeClaims[scope]));
       }.bind(this));
 
-      scopes.forEach(function(scope) {
-        if (scopeClaims[scope]) {
-          scopeClaims[scope].forEach(function(claim) {
-            claims = {}
-            claims[claim] = null;
-            _.defaults(result, claims);
-          }.bind(this));
-        }
-      }.bind(this));
-
       reply(result);
     })
   }
