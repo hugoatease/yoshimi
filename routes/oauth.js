@@ -103,17 +103,29 @@ var flows = {
         redis.set('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.redirect_uri', request.query.redirect_uri),
         redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.redirect_uri', config.get('expirations.access_code')),
         redis.set('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.scope', request.query.scope),
-        redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.scope', config.get('expirations.access_code')),
-        redis.set('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.nonce', request.query.nonce),
-        redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.nonce', config.get('expirations.access_code')),
+        redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.scope', config.get('expirations.access_code'))
       ]).then(function() {
-        var redirect_uri = url.parse(request.query.redirect_uri);
-        if (!redirect_uri.query) redirect_uri.query = {};
-        redirect_uri.query.code = code;
-        if (request.query.state) {
-          redirect_uri.query.state = request.query.state;
+        function sendResult() {
+          var redirect_uri = url.parse(request.query.redirect_uri);
+          if (!redirect_uri.query) redirect_uri.query = {};
+          redirect_uri.query.code = code;
+          if (request.query.state) {
+            redirect_uri.query.state = request.query.state;
+          }
+          reply.redirect(url.format(redirect_uri));
         }
-        reply.redirect(url.format(redirect_uri));
+
+        if (request.query.nonce) {
+          Promise.all([
+            redis.set('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.nonce', request.query.nonce),
+            redis.expire('yoshimi.oauth.code.' + request.query.client_id + '.' + code + '.nonce', config.get('expirations.access_code'))
+          ]).then(function() {
+            sendResult();
+          })
+        }
+        else {
+          sendResult();
+        }
       })
     })
   },
