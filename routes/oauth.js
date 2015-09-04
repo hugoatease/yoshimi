@@ -167,7 +167,10 @@ var grants = {
         redis.del('yoshimi.oauth.code.' + request.auth.credentials.client_id + '.' + request.payload.code + '.nonce')
       ]).then(function() {
         if (!props.user) {
-          return reply(Boom.unauthorized('Invalid authorization code'));
+          return reply({
+            error: 'invalid_grant',
+            error_description: 'Invalid authorization code'
+          }).code(400);
         }
 
         var hasRefresh = includes(trimValues(props.scope), 'offline_access');
@@ -185,16 +188,25 @@ var grants = {
         });
       });
     }).catch(function() {
-      return reply(Boom.unauthorized('Invalid authorization code'));
+      return reply({
+        error: 'invalid_grant',
+        error_description: 'Invalid authorization code'
+      }).code(400);
     });
   },
 
   refresh_token: function(server, request, reply) {
     if (!request.payload.refresh_token) {
-      return reply(Boom.badRequest('refresh_token must be provided'));
+      return reply({
+        error: 'invalid_request',
+        error_description: 'refresh_token must be provided'
+      }).code(400);
     }
     if (!request.payload.scope || !includes(trimValues(request.payload.scope), 'openid')) {
-      return reply(Boom.badRequest('Request must include openid scope'));
+      return reply({
+        error: 'invalid_request',
+        error_description: 'Request must include openid scope'
+      }).code(400);
     }
     redis.get('yoshimi.oauth.refresh_token.' + request.payload.refresh_token).then(function(bearer) {
       Promise.props({
@@ -203,10 +215,16 @@ var grants = {
         scope: redis.get('yoshimi.oauth.token.' + bearer + '.scope')
       }).then(function(props) {
         if (request.auth.credentials.client_id !== props.client) {
-          return reply(Boom.unauthorized('refresh_token does not belong to client'));
+          return reply({
+            error: 'invalid_grant',
+            error_description: 'refresh_token does not belong to client'
+          }).code(400);
         }
         if (_.difference(trimValues(request.payload.scope), trimValues(props.scope)).length > 0) {
-          return reply(Boom.unauthorized('Requested scopes are broader than originally issued'));
+          return reply({
+            error: 'invalid_request',
+            error_description: 'Requested scopes are broader than originally issued'
+          }).code(400);
         }
         Promise.all([
           redis.del('yoshimi.oauth.token.' + bearer + '.client'),
@@ -227,7 +245,10 @@ var grants = {
         });
       });
     }).catch(function() {
-      return reply(Boom.unauthorized('Invalid refresh token'));
+      return reply({
+        error: 'invalid_grant',
+        error_description: 'Invalid refresh_token'
+      }).code(400);
     });
   }
 }
@@ -332,6 +353,9 @@ module.exports = function(server) {
           client_id: Joi.string(),
           scope: Joi.string(),
           refresh_token: Joi.string()
+        },
+        failAction: function(request, reply, source, error) {
+          return reply.code(400);
         }
       }
     }
