@@ -85,7 +85,7 @@ function createIdToken(server, client_id, user_id, nonce) {
   if (nonce) {
     payload.nonce = nonce;
   }
-  return jwt.sign({}, key, {
+  return jwt.sign(payload, key, {
     algorithm: 'RS256',
     expiresInSeconds: config.get('expirations.id_token'),
     issuer: config.get('issuer_url'),
