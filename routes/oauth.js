@@ -135,7 +135,7 @@ var flows = {
       return oauthError(request, reply, 'invalid_request', 'nonce parameter must be provided');
     }
     createBearer(request.query.client_id, request.auth.credentials, request.query.scope).then(function(bearer) {
-      var id_token = createIdToken(server, request.query.client_id, request.auth.credentials, nonce);
+      var id_token = createIdToken(server, request.query.client_id, request.auth.credentials, request.query.nonce);
       var redirect_uri = url.parse(request.query.redirect_uri);
       if (!redirect_uri.query) redirect_uri.query = {};
       redirect_uri.query.access_token = bearer.bearer;
