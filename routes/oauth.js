@@ -352,9 +352,13 @@ module.exports = function(server) {
       }.bind(this));
 
       scopes.forEach(function(scope) {
-        scopeClaims[scope].forEach(function(claim) {
-          _.defaults(result, {claim: null});
-        }.bind(this));
+        if (scopeClaims[scope]) {
+          scopeClaims[scope].forEach(function(claim) {
+            claims = {}
+            claims[claim] = null;
+            _.defaults(result, claims);
+          }.bind(this));
+        }
       }.bind(this));
 
       reply(result);
