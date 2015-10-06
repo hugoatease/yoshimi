@@ -12,7 +12,8 @@ module.exports = function(server) {
       reply.view('recovery', {
         errors: request.session.flash('error'),
         token: request.query.token,
-        logo_url: config.get('logo_url')
+        logo_url: config.get('logo_url'),
+        proceed_url: request.to('password_recovery_proceed')
       });
     },
     config: {
@@ -95,6 +96,7 @@ module.exports = function(server) {
       });
     },
     config: {
+      id: 'password_recovery_proceed',
       validate: {
         payload: {
           token: Joi.string().required(),

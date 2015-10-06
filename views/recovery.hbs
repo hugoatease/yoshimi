@@ -29,7 +29,7 @@
       </div>
     </form>
     {{else}}
-    <form method="post" action="/password_recovery_proceed">
+    <form method="post" action="{{proceed_url}}">
       <div class="form-group">
         <label for="password">New password</label>
         <input type="password" class="form-control" id="password" name="password" placeholder="New password" />
