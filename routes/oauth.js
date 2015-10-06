@@ -375,6 +375,10 @@ module.exports = function(server) {
         _.merge(result, _.pick(user, scopeClaims[scope]));
       }.bind(this));
 
+      if (includes(trimValues(request.payload.scope), 'profile')) {
+        result.preferred_username = user.username;
+      }
+
       reply(result);
     })
   }
