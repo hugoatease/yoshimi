@@ -53,7 +53,9 @@ module.exports = function(server) {
           username: request.payload.username,
           password: hashed,
           email: email,
-          email_verified: verified
+          email_verified: verified,
+          given_name: request.payload.firstname,
+          family_name: request.payload.lastname
         }, function(err, results) {
           server.methods.sendValidation(server, request, results[0]._id, results[0].email).then(function() {
             var login_redirect = request.session.get('login_redirect');
@@ -130,7 +132,9 @@ module.exports = function(server) {
           password: Joi.string().min(6),
           password_confirm: Joi.string().min(6),
           email: Joi.string().email(),
-          email_token: Joi.string()
+          email_token: Joi.string(),
+          firstname: Joi.string(),
+          lastname: Joi.string()
         },
         failAction: function(request, reply, source, error) {
           error.data.details.forEach(function(item) {

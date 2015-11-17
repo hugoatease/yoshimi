@@ -377,6 +377,9 @@ module.exports = function(server) {
 
       if (includes(trimValues(request.auth.credentials.scope), 'profile')) {
         result.preferred_username = user.username;
+        if (includes(user, 'given_name') && includes(user, 'family_name')) {
+          result.name = user.given_name + ' ' + user.family_name;
+        }
       }
 
       reply(result);

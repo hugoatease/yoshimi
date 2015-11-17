@@ -36,6 +36,14 @@
         {{else}}
         <input type="hidden" name="email_token" value="{{email_token}}" />
         {{/unless}}
+        <div class="form-group">
+          <label for="firstname">First name</label>
+          <input type="text" class="form-control" id="firstname" name="firstname" placeholder="First name" />
+        </div>
+        <div class="form-group">
+          <label for="lastname">Last name</label>
+          <input type="text" class="form-control" id="lastname" name="lastname" placeholder="Last name" />
+        </div>
         <div class="text-center">
           <button type="submit" class="btn btn-primary">Sign Up</button>
         </div>
