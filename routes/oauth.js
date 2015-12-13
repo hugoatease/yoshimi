@@ -5,6 +5,7 @@ var jwt = require('jsonwebtoken');
 var fs = require('fs');
 var path = require('path');
 var url = require('url');
+var urlencode = require('urlencode');
 var includes = require('array-includes');
 var uid = require('uid-safe');
 var _ = require('lodash');
@@ -137,15 +138,19 @@ var flows = {
     createBearer(request.query.client_id, request.auth.credentials, request.query.scope).then(function(bearer) {
       var id_token = createIdToken(server, request.query.client_id, request.auth.credentials, request.query.nonce);
       var redirect_uri = url.parse(request.query.redirect_uri);
-      if (!redirect_uri.query) redirect_uri.query = {};
-      redirect_uri.query.access_token = bearer.bearer;
-      redirect_uri.query.id_token = id_token;
-      redirect_uri.query.token_type = 'Bearer';
-      redirect_uri.query.expires_in = bearer.expires;
+
+      var hash = {
+        access_token: bearer.bearer,
+        id_token: id_token,
+        token_type: 'Bearer',
+        expires_in: bearer.expires
+      };
 
       if (request.query.state) {
-        redirect_uri.query.state = request.query.state;
+        hash.state = request.query.state;
       }
+
+      redirect_uri.hash = urlencode.stringify(hash);
 
       reply.redirect(url.format(redirect_uri));
     });
