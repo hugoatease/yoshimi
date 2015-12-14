@@ -2,6 +2,9 @@ var Joi = require('joi');
 var bcrypt = require('bcrypt');
 var config = require('config');
 
+var acceptLanguage = require('accept-language');
+acceptLanguage.languages(['en', 'fr']);
+
 module.exports = function(server) {
   server.route({
     method: 'GET',
@@ -14,7 +17,8 @@ module.exports = function(server) {
         errors: request.session.flash('error'),
         signup_link: request.to('signup'),
         recovery_link: request.to('recovery'),
-        logo_url: config.get('logo_url')
+        logo_url: config.get('logo_url'),
+        lang: acceptLanguage.get(request.headers['accept-language'])
       });
     }
   })

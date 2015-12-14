@@ -5,7 +5,7 @@
         {{#if logo_url}}
         <img src="{{logo_url}}" height="100" />
         {{/if}}
-        <h3>Sign Up</h3>
+        <h3>{{polyglot lang 'signup'}}</h3>
       </div>
     </div>
     {{#each errors}}
@@ -17,45 +17,45 @@
       {{#unless email_only}}
       <form method="post">
         <div class="form-group">
-          <label for="username">Username</label>
-          <input type="text" class="form-control" id="username" name="username" placeholder="Username" />
+          <label for="username">{{polyglot lang 'username'}}</label>
+          <input type="text" class="form-control" id="username" name="username" placeholder="{{polyglot lang 'username'}}" />
         </div>
         <div class="form-group">
-          <label for="password">Password</label>
-          <input type="password" class="form-control" id="password" name="password" placeholder="Password" />
+          <label for="password">{{polyglot lang 'password'}}</label>
+          <input type="password" class="form-control" id="password" name="password" placeholder="{{polyglot lang 'password'}}" />
         </div>
         <div class="form-group">
-          <label for="password_confirm">Password confirmation</label>
-          <input type="password" class="form-control" id="password_confirm" name="password_confirm" placeholder="Password confirmation" />
+          <label for="password_confirm">{{polyglot lang 'passwordConfirm'}}</label>
+          <input type="password" class="form-control" id="password_confirm" name="password_confirm" placeholder="{{polyglot lang 'passwordConfirm'}}" />
         </div>
         {{#unless email_token}}
         <div class="form-group">
-          <label for="email">Email address</label>
-          <input type="email" class="form-control" id="email" name="email" placeholder="Email address" />
+          <label for="email">{{polyglot lang 'email'}}</label>
+          <input type="email" class="form-control" id="email" name="email" placeholder="{{polyglot lang 'email'}}" />
         </div>
         {{else}}
         <input type="hidden" name="email_token" value="{{email_token}}" />
         {{/unless}}
         <div class="form-group">
-          <label for="firstname">First name</label>
-          <input type="text" class="form-control" id="firstname" name="firstname" placeholder="First name" />
+          <label for="firstname">{{polyglot lang 'firstName'}}</label>
+          <input type="text" class="form-control" id="firstname" name="firstname" placeholder="{{polyglot lang 'firstName'}}" />
         </div>
         <div class="form-group">
-          <label for="lastname">Last name</label>
-          <input type="text" class="form-control" id="lastname" name="lastname" placeholder="Last name" />
+          <label for="lastname">{{polyglot lang 'lastName'}}</label>
+          <input type="text" class="form-control" id="lastname" name="lastname" placeholder="{{polyglot lang 'lastName'}}" />
         </div>
         <div class="text-center">
-          <button type="submit" class="btn btn-primary">Sign Up</button>
+          <button type="submit" class="btn btn-primary">{{polyglot lang 'signup'}}</button>
         </div>
       </form>
       {{else}}
       <form method="post">
         <div class="form-group">
-          <label for="email">Email address</label>
-          <input type="email" class="form-control" id="email" name="email" placeholder="Email address" />
+          <label for="email">{{polyglot lang 'email'}}</label>
+          <input type="email" class="form-control" id="email" name="email" placeholder="{{polyglot lang 'email'}}" />
         </div>
         <div class="text-center">
-          <button type="submit" class="btn btn-primary">Sign Up</button>
+          <button type="submit" class="btn btn-primary">{{polyglot lang 'signup'}}</button>
         </div>
       </form>
       {{/unless}}

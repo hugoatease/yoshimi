@@ -5,7 +5,7 @@
         {{#if logo_url}}
         <img src="{{logo_url}}" height="100" />
         {{/if}}
-        <h3>Log In</h3>
+        <h3>{{polyglot lang 'login'}}</h3>
       </div>
     </div>
     {{#each errors}}
@@ -15,18 +15,18 @@
     {{/each}}
     <form method="post">
       <div class="form-group">
-        <label for="username">Username</label>
-        <input type="text" class="form-control" id="username" name="username" placeholder="Username" />
+        <label for="username">{{polyglot lang 'username'}}</label>
+        <input type="text" class="form-control" id="username" name="username" placeholder="{{polyglot lang 'username'}}" />
       </div>
       <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" class="form-control" id="password" name="password" placeholder="Password" />
-        <a href="{{recovery_link}}">Forget password ?</a>
+        <label for="password">{{polyglot lang 'password'}}</label>
+        <input type="password" class="form-control" id="password" name="password" placeholder="{{polyglot lang 'password'}}" />
+        <a href="{{recovery_link}}">{{polyglot lang 'forgetPassword'}}</a>
       </div>
       <div class="text-center">
-        <button type="submit" class="btn btn-primary">Log In</button>
+        <button type="submit" class="btn btn-primary">{{polyglot lang 'login'}}</button>
         &nbsp;&nbsp;&nbsp;
-        <a class="btn btn-default" href="{{signup_link}}">Sign up</a>
+        <a class="btn btn-default" href="{{signup_link}}">{{polyglot lang 'signup'}}</a>
       </div>
     </form>
   </div>

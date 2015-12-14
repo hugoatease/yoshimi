@@ -5,6 +5,8 @@ var bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 var url = require('url');
 var config = require('config');
+var acceptLanguage = require('accept-language');
+acceptLanguage.languages(['en', 'fr']);
 
 module.exports = function(server) {
   server.route({
@@ -14,7 +16,8 @@ module.exports = function(server) {
       if (!config.get('email_validation_mandatory')) {
         reply.view('signup', {
           errors: request.session.flash('error'),
-          logo_url: config.get('logo_url')
+          logo_url: config.get('logo_url'),
+          lang: acceptLanguage.get(request.headers['accept-language'])
         });
       }
       else {
@@ -23,14 +26,16 @@ module.exports = function(server) {
             errors: request.session.flash('error'),
             email_only: true,
             validation_sent: request.query.validation_sent,
-            logo_url: config.get('logo_url')
+            logo_url: config.get('logo_url'),
+            lang: acceptLanguage.get(request.headers['accept-language'])
           });
         }
         else {
           reply.view('signup', {
             errors: request.session.flash('error'),
             email_token: request.query.email_token,
-            logo_url: config.get('logo_url')
+            logo_url: config.get('logo_url'),
+            lang: acceptLanguage.get(request.headers['accept-language'])
           });
         }
       }
@@ -158,7 +163,8 @@ module.exports = function(server) {
           return reply.view('validation', {
             success: false,
             error: 'Invalid verification token',
-            logo_url: config.get('logo_url')
+            logo_url: config.get('logo_url'),
+            lang: acceptLanguage.get(request.headers['accept-language'])
           })
         }
         var User = request.server.plugins['hapi-mongo-models'].User;
@@ -168,7 +174,8 @@ module.exports = function(server) {
             return reply.view('validation', {
               success: false,
               error: 'Email adress has already been verified',
-              logo_url: config.get('logo_url')
+              logo_url: config.get('logo_url'),
+              lang: acceptLanguage.get(request.headers['accept-language'])
             });
           }
           User.findById(data.sub, function(err, user) {
@@ -177,14 +184,16 @@ module.exports = function(server) {
               return reply.view('validation', {
                 success: false,
                 error: 'Token email doesn\'t match user email address',
-                logo_url: config.get('logo_url')
+                logo_url: config.get('logo_url'),
+                lang: acceptLanguage.get(request.headers['accept-language'])
               })
             }
             User.updateOne({_id: User.ObjectId(data.sub), email: data.email}, {$set: {email_verified: true}}, function(err, updated) {
               if (err) return reply(err);
               return reply.view('validation', {
                 success: true,
-                logo_url: config.get('logo_url')
+                logo_url: config.get('logo_url'),
+                lang: acceptLanguage.get(request.headers['accept-language'])
               });
             });
           })

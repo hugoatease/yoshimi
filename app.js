@@ -12,6 +12,10 @@ var viewsOptions = {
   engines: {hbs: require('handlebars')},
   relativeTo: __dirname,
   path: 'views',
+  helpersPath: 'helpers',
+  context: {
+    lang: 'en'
+  },
   layout: true,
   context: {}
 }
