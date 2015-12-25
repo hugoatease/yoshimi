@@ -14,7 +14,7 @@ OAuthClient._collection = 'oauth_clients';
 OAuthClient.schema = Joi.object().keys({
   client_id: Joi.string().required().min(42),
   client_secret: Joi.string().required().min(42),
-  owner: Joi.objectId.required(),
+  owner: Joi.objectId().required(),
   name: Joi.string().required(),
   description: Joi.string(),
   redirect_uri: Joi.string(),
