@@ -1,5 +1,17 @@
+<style type="text/css">
+  @media (min-width: 767px) {
+    .firstname {
+      padding-right: 3px;
+    }
+
+    .lastname {
+      padding-left: 3px;
+    }
+  }
+</style>
+
 <div class="row">
-  <div class="col-sm-4 col-sm-offset-4">
+  <div class="col-sm-6 col-sm-offset-3 col-lg-4 col-lg-offset-4">
     <div class="page-header">
       <div class="text-center">
         {{#if logo_url}}
@@ -16,6 +28,20 @@
     {{#unless validation_sent}}
       {{#unless email_only}}
       <form method="post">
+        <div class="row">
+          <div class="col-sm-6 firstname">
+            <div class="form-group">
+              <label for="firstname">{{polyglot lang 'firstName'}}</label>
+              <input type="text" class="form-control" id="firstname" name="firstname" placeholder="{{polyglot lang 'firstName'}}" />
+            </div>
+          </div>
+          <div class="col-sm-6 lastname">
+            <div class="form-group">
+              <label for="lastname">{{polyglot lang 'lastName'}}</label>
+              <input type="text" class="form-control" id="lastname" name="lastname" placeholder="{{polyglot lang 'lastName'}}" />
+            </div>
+          </div>
+        </div>
         {{#unless email_token}}
         <div class="form-group">
           <label for="email">{{polyglot lang 'email'}}</label>
@@ -24,14 +50,6 @@
         {{else}}
         <input type="hidden" name="email_token" value="{{email_token}}" />
         {{/unless}}
-        <div class="form-group">
-          <label for="firstname">{{polyglot lang 'firstName'}}</label>
-          <input type="text" class="form-control" id="firstname" name="firstname" placeholder="{{polyglot lang 'firstName'}}" />
-        </div>
-        <div class="form-group">
-          <label for="lastname">{{polyglot lang 'lastName'}}</label>
-          <input type="text" class="form-control" id="lastname" name="lastname" placeholder="{{polyglot lang 'lastName'}}" />
-        </div>
         <div class="form-group">
           <label for="password">{{polyglot lang 'password'}}</label>
           <input type="password" class="form-control" id="password" name="password" placeholder="{{polyglot lang 'password'}}" />
