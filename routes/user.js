@@ -96,11 +96,8 @@ module.exports = function(server) {
         if (conflicts > 0) {
           return reply(Boom.unauthorized('Email address is already associated to another user'));
         }
-        User.findByIdAndUpdate(request.auth.credentials, {$set: {email: request.payload.email, email_verified: false}}, function(err, user) {
-          if (err) return reply(err);
-          server.methods.sendValidation(server, request, user._id, user.email, acceptLanguage.get(request.headers['accept-language'])).then(function() {
-            reply(user);
-          })
+        server.methods.sendValidation(server, request, user._id, user.email, acceptLanguage.get(request.headers['accept-language'])).then(function() {
+          reply(user);
         });
       });
     },

@@ -187,7 +187,7 @@ module.exports = function(server) {
                 lang: acceptLanguage.get(request.headers['accept-language'])
               })
             }
-            User.updateOne({_id: User.ObjectId(data.sub), email: data.email}, {$set: {email_verified: true}}, function(err, updated) {
+            User.updateOne({_id: User.ObjectId(data.sub)}, {$set: {email: data.email, email_verified: true}}, function(err, updated) {
               if (err) return reply(err);
               return reply.view('validation', {
                 success: true,
