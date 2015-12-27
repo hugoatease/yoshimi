@@ -177,25 +177,14 @@ module.exports = function(server) {
               lang: acceptLanguage.get(request.headers['accept-language'])
             });
           }
-          User.findById(data.sub, function(err, user) {
+          User.updateOne({_id: User.ObjectId(data.sub)}, {$set: {email: data.email, email_verified: true}}, function(err, updated) {
             if (err) return reply(err);
-            if (user.email !== data.email) {
-              return reply.view('validation', {
-                success: false,
-                error: 'Token email doesn\'t match user email address',
-                logo_url: config.get('logo_url'),
-                lang: acceptLanguage.get(request.headers['accept-language'])
-              })
-            }
-            User.updateOne({_id: User.ObjectId(data.sub)}, {$set: {email: data.email, email_verified: true}}, function(err, updated) {
-              if (err) return reply(err);
-              return reply.view('validation', {
-                success: true,
-                logo_url: config.get('logo_url'),
-                lang: acceptLanguage.get(request.headers['accept-language'])
-              });
+            return reply.view('validation', {
+              success: true,
+              logo_url: config.get('logo_url'),
+              lang: acceptLanguage.get(request.headers['accept-language'])
             });
-          })
+          });
         })
       })
     },
