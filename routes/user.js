@@ -96,8 +96,11 @@ module.exports = function(server) {
         if (conflicts > 0) {
           return reply(Boom.unauthorized('Email address is already associated to another user'));
         }
-        server.methods.sendValidation(server, request, user._id, user.email, acceptLanguage.get(request.headers['accept-language'])).then(function() {
-          reply(user);
+        User.findById(request.auth.credentials, function(err, user) {
+           if (err) return reply(err);
+           server.methods.sendValidation(server, request, user._id, user.email, acceptLanguage.get(request.headers['accept-language'])).then(function() {
+             reply(user);
+           });
         });
       });
     },

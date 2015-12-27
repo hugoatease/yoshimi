@@ -9,6 +9,7 @@ module.exports = React.createClass({
       email: null,
       email_verified: false,
       editing: false,
+      waiting: false,
       error: null
     }
   },
@@ -40,8 +41,7 @@ module.exports = React.createClass({
           });
         }
         else {
-          this.setState({editing: false});
-          this.fetchUser();
+          this.setState({editing: false, error: null, waiting: true});
         }
       }.bind(this));
   },
@@ -56,20 +56,18 @@ module.exports = React.createClass({
       var validation_link = null;
     }
 
-    if (!this.state.editing) {
-      var body = (
-        <div>
-          <p>
-            <b>Address:</b> {this.state.email}<br />
-            <b>Verification:</b> {verified}
-          </p>
-          <button className="btn btn-default" onClick={this.toggle}>Change address</button>
-        </div>
-      );
-    }
+    var body = (
+      <div>
+        <p>
+          <b>Address:</b> {this.state.email}<br />
+          <b>Verification:</b> {verified}
+        </p>
+        <button className="btn btn-default" onClick={this.toggle}>Change address</button>
+      </div>
+    );
 
-    else {
-      var body = (
+    if (this.state.editing) {
+      body = (
         <form onSubmit={this.submit}>
           <div className="form-group">
             <label htmlFor="email">New email address</label>
@@ -81,6 +79,16 @@ module.exports = React.createClass({
             <button className="btn btn-default" onClick={this.toggle}>Cancel</button>
           </div>
         </form>
+      );
+    }
+
+    if (this.state.waiting) {
+      body = (
+        <div className="alert alert-info">
+          <b>Confirmation needed</b><br />
+          A validation email has been sent to your provided email address.
+          Please check your email to validate changes.
+        </div>
       );
     }
 
