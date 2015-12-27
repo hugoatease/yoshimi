@@ -28,7 +28,7 @@ module.exports = function(server) {
     path: '/login',
     handler: function(request, reply) {
       var User = request.server.plugins['hapi-mongo-models'].User;
-      User.findOne({username: request.payload.username}, function(err, result) {
+      User.findOne({'$or': [{username: request.payload.username}, {email: request.payload.username}]}, function(err, result) {
         if (err || !result) {
           request.session.flash('error', 'Username does not exist');
           return reply.redirect(request.to('login'));

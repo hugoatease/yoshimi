@@ -9,7 +9,8 @@ var phrases_en = {
   forgetPassword: 'Forget password ?',
   email: 'Email address',
   firstName: 'First name',
-  lastName: 'Last name'
+  lastName: 'Last name',
+  emailOrUsername: 'Email or username'
 }
 
 var phrases_fr = {
@@ -21,7 +22,8 @@ var phrases_fr = {
   forgetPassword: 'Mot de passe oublié ?',
   email: 'Adresse e-mail',
   firstName: 'Prénom',
-  lastName: 'Nom'
+  lastName: 'Nom',
+  emailOrUsername: 'E-mail ou nom d\'utilisateur'
 }
 
 var locales = {en: phrases_en, fr: phrases_fr}

@@ -51,7 +51,11 @@ module.exports = React.createClass({
   },
 
   render: function() {
+    var username = null;
     var admin = null, given_name = null, family_name = null;
+    if (this.state.username) {
+      username = <span><b>Username:</b> {this.state.username}<br /></span>
+    }
     if (this.state.admin) {
       var admin = <span><span className="label label-danger">Administrator</span><br /></span>
     }
@@ -66,7 +70,7 @@ module.exports = React.createClass({
       var body = (
         <div>
           <p>
-            <b>Username:</b> {this.state.username}<br />
+            {username}
             {admin}
             {given_name}
             {family_name}

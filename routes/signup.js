@@ -47,20 +47,19 @@ module.exports = function(server) {
 
   function registerUser(server, request, reply, email, verified) {
     var User = request.server.plugins['hapi-mongo-models'].User;
-    User.count({$or: [{username: request.payload.username}, {email: email, email_verified: true}]}, function(err, count) {
+    User.count({email: email}, function(err, count) {
       if (err || count > 0) {
-        request.session.flash('error', "Username or email is already registered");
+        request.session.flash('error', "Email is already registered");
         return reply.redirect(request.to('signup'));
       }
 
       bcrypt.hash(request.payload.password, 10, function(err, hashed) {
         User.insertOne({
-          username: request.payload.username,
+          given_name: request.payload.firstname,
+          family_name: request.payload.lastname,
           password: hashed,
           email: email,
           email_verified: verified,
-          given_name: request.payload.firstname,
-          family_name: request.payload.lastname
         }, function(err, results) {
           server.methods.sendValidation(server, request, results[0]._id, results[0].email).then(function() {
             var login_redirect = request.session.get('login_redirect');
@@ -85,7 +84,7 @@ module.exports = function(server) {
       var User = request.server.plugins['hapi-mongo-models'].User;
 
       if (config.get('email_validation_mandatory') && request.payload.email) {
-        User.count({email: request.payload.email, email_verified: true}, function(err, count) {
+        User.count({email: request.payload.email}, function(err, count) {
           if (err || count > 0) {
             request.session.flash('error', "Email address is already used by a registered user");
             return reply.redirect(request.to('signup'));

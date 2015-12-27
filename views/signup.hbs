@@ -16,18 +16,6 @@
     {{#unless validation_sent}}
       {{#unless email_only}}
       <form method="post">
-        <div class="form-group">
-          <label for="username">{{polyglot lang 'username'}}</label>
-          <input type="text" class="form-control" id="username" name="username" placeholder="{{polyglot lang 'username'}}" />
-        </div>
-        <div class="form-group">
-          <label for="password">{{polyglot lang 'password'}}</label>
-          <input type="password" class="form-control" id="password" name="password" placeholder="{{polyglot lang 'password'}}" />
-        </div>
-        <div class="form-group">
-          <label for="password_confirm">{{polyglot lang 'passwordConfirm'}}</label>
-          <input type="password" class="form-control" id="password_confirm" name="password_confirm" placeholder="{{polyglot lang 'passwordConfirm'}}" />
-        </div>
         {{#unless email_token}}
         <div class="form-group">
           <label for="email">{{polyglot lang 'email'}}</label>
@@ -43,6 +31,14 @@
         <div class="form-group">
           <label for="lastname">{{polyglot lang 'lastName'}}</label>
           <input type="text" class="form-control" id="lastname" name="lastname" placeholder="{{polyglot lang 'lastName'}}" />
+        </div>
+        <div class="form-group">
+          <label for="password">{{polyglot lang 'password'}}</label>
+          <input type="password" class="form-control" id="password" name="password" placeholder="{{polyglot lang 'password'}}" />
+        </div>
+        <div class="form-group">
+          <label for="password_confirm">{{polyglot lang 'passwordConfirm'}}</label>
+          <input type="password" class="form-control" id="password_confirm" name="password_confirm" placeholder="{{polyglot lang 'passwordConfirm'}}" />
         </div>
         <div class="text-center">
           <button type="submit" class="btn btn-primary">{{polyglot lang 'signup'}}</button>

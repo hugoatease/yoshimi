@@ -89,7 +89,7 @@ module.exports = function(server) {
     path: '/api/user/email',
     handler: function(request, reply) {
       var User = request.server.plugins['hapi-mongo-models'].User;
-      User.count({email: request.payload.email, email_verified: true}, function(err, conflicts) {
+      User.count({email: request.payload.email}, function(err, conflicts) {
         if (err) return reply(err);
         if (conflicts > 0) {
           return reply(Boom.unauthorized('Email address is already associated to another user'));
