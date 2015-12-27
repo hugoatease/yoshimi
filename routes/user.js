@@ -2,6 +2,8 @@ var _ = require('lodash');
 var Joi = require('joi');
 var Boom = require('boom');
 var bcrypt = require('bcrypt');
+var acceptLanguage = require('accept-language');
+acceptLanguage.languages(['en', 'fr']);
 
 module.exports = function(server) {
   server.route({
@@ -96,7 +98,7 @@ module.exports = function(server) {
         }
         User.findByIdAndUpdate(request.auth.credentials, {$set: {email: request.payload.email, email_verified: false}}, function(err, user) {
           if (err) return reply(err);
-          server.methods.sendValidation(server, request, user._id, user.email).then(function() {
+          server.methods.sendValidation(server, request, user._id, user.email, acceptLanguage.get(request.headers['accept-language'])).then(function() {
             reply(user);
           })
         });

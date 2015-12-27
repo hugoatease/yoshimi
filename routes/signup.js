@@ -61,7 +61,7 @@ module.exports = function(server) {
           email: email,
           email_verified: verified,
         }, function(err, results) {
-          server.methods.sendValidation(server, request, results[0]._id, results[0].email).then(function() {
+          server.methods.sendValidation(server, request, results[0]._id, results[0].email, acceptLanguage.get(request.headers['accept-language'])).then(function() {
             var login_redirect = request.session.get('login_redirect');
             if (login_redirect) {
               request.auth.session.set(results[0]._id);

@@ -10,7 +10,8 @@ var phrases_en = {
   email: 'Email address',
   firstName: 'First name',
   lastName: 'Last name',
-  emailOrUsername: 'Email or username'
+  emailOrUsername: 'Email or username',
+  emailValidation: 'Email validation'
 }
 
 var phrases_fr = {
@@ -23,7 +24,8 @@ var phrases_fr = {
   email: 'Adresse e-mail',
   firstName: 'Prénom',
   lastName: 'Nom',
-  emailOrUsername: 'E-mail ou nom d\'utilisateur'
+  emailOrUsername: 'E-mail ou nom d\'utilisateur',
+  emailValidation: 'Validation d\'adresse mail'
 }
 
 var locales = {en: phrases_en, fr: phrases_fr}
