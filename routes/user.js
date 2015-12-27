@@ -98,7 +98,7 @@ module.exports = function(server) {
         }
         User.findById(request.auth.credentials, function(err, user) {
            if (err) return reply(err);
-           server.methods.sendValidation(server, request, user._id, user.email, acceptLanguage.get(request.headers['accept-language'])).then(function() {
+           server.methods.sendValidation(server, request, user._id, request.payload.email, acceptLanguage.get(request.headers['accept-language'])).then(function() {
              reply(user);
            });
         });
