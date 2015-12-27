@@ -113,6 +113,14 @@ server.register([
 
   server.register(require('./routes'), routeOptions, function(err) {
     require('./methods')(server);
+
+    server.ext('onPreAuth', function(request, reply) {
+      if (request.path == request.to('authorization', {}, {rel: true}) && request.query.client_id) {
+        request.session.set('oauth_client', request.query.client_id);
+      }
+      return reply.continue();
+    });
+
     server.start(function() {
       console.log('Server running at: ', server.info.uri);
     });

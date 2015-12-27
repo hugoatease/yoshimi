@@ -8,6 +8,14 @@
         <h3>{{polyglot lang 'login'}}</h3>
       </div>
     </div>
+    {{#if client_name}}
+    <div class="alert alert-info">
+      <p class="small">
+        <b>{{polyglot lang 'loginTo'}} {{client_name}}</b><br />
+        {{polyglot lang 'redirectNotice'}} "{{client_name}}".
+      </p>
+    </div>
+    {{/if}}
     {{#each errors}}
     <div class="alert alert-warning">
       <b>Error.</b> {{{this}}}

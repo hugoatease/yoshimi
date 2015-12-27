@@ -10,16 +10,33 @@ module.exports = function(server) {
     method: 'GET',
     path: '/login',
     handler: function(request, reply) {
+      var OAuthClient = request.server.plugins['hapi-mongo-models'].OAuthClient;
       if (request.query.next) {
         request.session.set('login_redirect', request.query.next);
       }
-      reply.view('login', {
-        errors: request.session.flash('error'),
-        signup_link: request.to('signup'),
-        recovery_link: request.to('recovery'),
-        logo_url: config.get('logo_url'),
-        lang: acceptLanguage.get(request.headers['accept-language'])
-      });
+      if (request.session.get('oauth_client')) {
+        OAuthClient.findOne({client_id: request.session.get('oauth_client')}, function(err, client) {
+          if (err) return;
+          reply.view('login', {
+            errors: request.session.flash('error'),
+            signup_link: request.to('signup'),
+            recovery_link: request.to('recovery'),
+            logo_url: config.get('logo_url'),
+            lang: acceptLanguage.get(request.headers['accept-language']),
+            client_name: client.name
+          });
+        });
+        request.session.clear('oauth_client');
+      }
+      else {
+        reply.view('login', {
+          errors: request.session.flash('error'),
+          signup_link: request.to('signup'),
+          recovery_link: request.to('recovery'),
+          logo_url: config.get('logo_url'),
+          lang: acceptLanguage.get(request.headers['accept-language'])
+        });
+      }
     }
   })
 

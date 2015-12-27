@@ -11,7 +11,9 @@ var phrases_en = {
   firstName: 'First name',
   lastName: 'Last name',
   emailOrUsername: 'Email or username',
-  emailValidation: 'Email validation'
+  emailValidation: 'Email validation',
+  loginTo: 'Login to',
+  redirectNotice: 'Once authenticated, you will be redirected to'
 }
 
 var phrases_fr = {
@@ -25,7 +27,9 @@ var phrases_fr = {
   firstName: 'Prénom',
   lastName: 'Nom',
   emailOrUsername: 'E-mail ou nom d\'utilisateur',
-  emailValidation: 'Validation d\'adresse mail'
+  emailValidation: 'Validation d\'adresse mail',
+  loginTo: 'Connexion à',
+  redirectNotice: 'Une fois authentifié, vous serez redirigés sur '
 }
 
 var locales = {en: phrases_en, fr: phrases_fr}
