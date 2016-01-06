@@ -13,6 +13,7 @@ var phrases_en = {
   emailOrUsername: 'Email or username',
   emailValidation: 'Email validation',
   loginTo: 'Login to',
+  signupTo: 'Signup to',
   redirectNotice: 'Once authenticated, you will be redirected to'
 }
 
@@ -29,6 +30,7 @@ var phrases_fr = {
   emailOrUsername: 'E-mail ou nom d\'utilisateur',
   emailValidation: 'Validation d\'adresse mail',
   loginTo: 'Connexion à',
+  signupTo: 'Inscription à',
   redirectNotice: 'Une fois authentifié, vous serez redirigés sur '
 }
 

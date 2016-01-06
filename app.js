@@ -117,6 +117,9 @@ server.register([
     server.ext('onPreAuth', function(request, reply) {
       if (request.path == request.to('authorization', {}, {rel: true}) && request.query.client_id) {
         request.session.set('oauth_client', request.query.client_id);
+        if (request.query.signup_redirect && request.query.signup_redirect === 'true') {
+          request.session.set('signup_redirect', 'true');
+        }
       }
       return reply.continue();
     });

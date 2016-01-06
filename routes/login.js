@@ -14,6 +14,10 @@ module.exports = function(server) {
       if (request.query.next) {
         request.session.set('login_redirect', request.query.next);
       }
+      if (request.session.get('signup_redirect') === 'true') {
+        request.session.clear('signup_redirect');
+        return reply.redirect(request.to('signup'));
+      }
       if (request.session.get('oauth_client')) {
         OAuthClient.findOne({client_id: request.session.get('oauth_client')}, function(err, client) {
           if (err) return;
@@ -26,7 +30,6 @@ module.exports = function(server) {
             client_name: client.name
           });
         });
-        request.session.clear('oauth_client');
       }
       else {
         reply.view('login', {
@@ -37,6 +40,7 @@ module.exports = function(server) {
           lang: acceptLanguage.get(request.headers['accept-language'])
         });
       }
+      request.session.clear('oauth_client');
     }
   })
 

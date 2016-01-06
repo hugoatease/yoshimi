@@ -13,22 +13,51 @@ module.exports = function(server) {
     method: 'GET',
     path: '/signup',
     handler: function(request, reply) {
+      var OAuthClient = request.server.plugins['hapi-mongo-models'].OAuthClient;
       if (!config.get('email_validation_mandatory')) {
-        reply.view('signup', {
-          errors: request.session.flash('error'),
-          logo_url: config.get('logo_url'),
-          lang: acceptLanguage.get(request.headers['accept-language'])
-        });
-      }
-      else {
-        if (!request.query.email_token) {
+        if (request.session.get('oauth_client')) {
+          OAuthClient.findOne({client_id: request.session.get('oauth_client')}, function(err, client) {
+            if (err) return;
+            reply.view('signup', {
+              errors: request.session.flash('error'),
+              logo_url: config.get('logo_url'),
+              lang: acceptLanguage.get(request.headers['accept-language']),
+              client_name: client.name
+            });
+          });
+        }
+        else {
           reply.view('signup', {
             errors: request.session.flash('error'),
-            email_only: true,
-            validation_sent: request.query.validation_sent,
             logo_url: config.get('logo_url'),
             lang: acceptLanguage.get(request.headers['accept-language'])
           });
+        }
+      }
+      else {
+        if (!request.query.email_token) {
+          if (request.session.get('oauth_client')) {
+            OAuthClient.findOne({client_id: request.session.get('oauth_client')}, function(err, client) {
+              if (err) return;
+              reply.view('signup', {
+                errors: request.session.flash('error'),
+                email_only: true,
+                validation_sent: request.query.validation_sent,
+                logo_url: config.get('logo_url'),
+                lang: acceptLanguage.get(request.headers['accept-language']),
+                client_name: client.name
+              });
+            });
+          }
+          else {
+            reply.view('signup', {
+              errors: request.session.flash('error'),
+              email_only: true,
+              validation_sent: request.query.validation_sent,
+              logo_url: config.get('logo_url'),
+              lang: acceptLanguage.get(request.headers['accept-language'])
+            });
+          }
         }
         else {
           reply.view('signup', {
@@ -39,6 +68,7 @@ module.exports = function(server) {
           });
         }
       }
+      request.session.clear('oauth_client');
     },
     config: {
       id: 'signup'
