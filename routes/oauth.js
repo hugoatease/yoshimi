@@ -329,7 +329,8 @@ module.exports = function(server) {
           client_id: Joi.string().required(),
           redirect_uri: Joi.string().required().uri({scheme: ['http', 'https']}),
           state: Joi.string(),
-          nonce: Joi.string()
+          nonce: Joi.string(),
+          signup_redirect: Joi.boolean()
         },
         failAction: function(request, reply, source, error) {
           return oauthError(request, reply, 'invalid_request');
