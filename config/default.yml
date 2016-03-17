@@ -20,6 +20,7 @@ expirations:
 server_email: noreply@example.com
 email_validation_mandatory: false
 logo_url: null
+use_etcd: false
 
 key: |
   -----BEGIN RSA PRIVATE KEY-----

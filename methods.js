@@ -2,6 +2,12 @@ var jwt = require('jsonwebtoken');
 var url = require('url');
 var config = require('config');
 var polyglot = require('./polyglot');
+var Etcd = require('node-etcd');
+var keyBy = require('lodash.keyby');
+
+if (config.get('use_etcd')) {
+  etcd = new Etcd('127.0.0.1', '2379');
+}
 
 function createMailToken(server, user_id, email) {
   return jwt.sign({
@@ -35,6 +41,30 @@ module.exports = function(server) {
         }
       }, function() {
         resolve();
+      });
+    });
+  });
+
+  server.method('etcdClient', function(client_id) {
+    var OAuthClient = server.plugins['hapi-mongo-models'].OAuthClient;
+    return new Promise(function(resolve, reject) {
+      etcd.get('/yoshimi/clients/' + client_id, {recursive: true}, function(err, data) {
+        if (err) {
+          OAuthClient.findOne({client_id: client_id}, function(err, client) {
+            if (err) {
+              return resolve(null);
+            }
+            return resolve(client);
+          });
+        }
+        else {
+          var keys = keyBy(data.node.nodes, 'key');
+          return resolve({
+            name: keys['/yoshimi/clients/' + client_id + '/name'].value,
+            client_secret: keys['/yoshimi/clients/' + client_id + '/client_secret'].value,
+            redirect_uri: keys['/yoshimi/clients/' + client_id + '/redirect_uri'].value
+          });
+        }
       });
     });
   });

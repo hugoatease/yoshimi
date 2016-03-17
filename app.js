@@ -77,15 +77,30 @@ server.register([
   server.auth.strategy('basic', 'basic', {
     validateFunc: function(request, username, password, callback) {
       var OAuthClient = request.server.plugins['hapi-mongo-models'].OAuthClient;
-      OAuthClient.findOne({client_id: username, client_secret: password}, function(err, client) {
-        if (err) return callback(err);
-        if (!client) {
-          callback(null, false);
-        }
-        else {
-          callback(null, true, {client_id: username, client_secret: password});
-        }
-      });
+      if (!config.get('use_etcd')) {
+        OAuthClient.findOne({client_id: username, client_secret: password}, function(err, client) {
+          if (err) return callback(err);
+          if (!client) {
+            callback(null, false);
+          }
+          else {
+            callback(null, true, {client_id: username, client_secret: password});
+          }
+        });
+      }
+      else {
+        request.server.methods.etcdClient(username).then(function(client) {
+          if (!client) {
+            return callback(null, false);
+          }
+
+          if (client.client_secret !== password) {
+            return callback(null, false);
+          }
+
+          return callback(null, true, {client_id: username, client_secret: password});
+        });
+      }
     }
   });
 

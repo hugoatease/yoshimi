@@ -31,17 +31,34 @@ function trimValues(values) {
   return values.split(' ').filter(function(value) { return value; });
 }
 
-function checkClient(client_id, redirect_uri) {
+function checkClient(server, client_id, redirect_uri) {
   return new Promise(function(resolve, reject) {
-    OAuthClient.findOne({client_id: client_id, redirect_uri: redirect_uri}, function(err, result) {
-      if (err) return reject(err);
-      if (!result) {
-        reject(Boom.unauthorized('Client not found'));
-      }
-      else {
-        resolve(result);
-      }
-    })
+    if (!config.get('use_etcd')) {
+      OAuthClient.findOne({client_id: client_id, redirect_uri: redirect_uri}, function(err, result) {
+        if (err) return reject(err);
+        if (!result) {
+          reject(Boom.unauthorized('Client not found'));
+        }
+        else {
+          resolve(result);
+        }
+      })
+    }
+    else {
+      server.methods.etcdClient(client_id).then(function(client) {
+        if (!client) {
+          reject(Boom.unauthorized('Client not found'));
+        }
+        else {
+          if (client.redirect_uri !== redirect_uri) {
+            reject(Boom.unauthorized('Client not found'));
+          }
+          else {
+            resolve(client);
+          }
+        }
+      });
+    }
   }.bind(this));
 }
 
@@ -305,7 +322,7 @@ module.exports = function(server) {
         return oauthError(request, reply, 'invalid_scope', 'Request must include openid scope');
       }
       var scopes = trimValues(request.query.scope);
-      checkClient(request.query.client_id, request.query.redirect_uri).then(function(client) {
+      checkClient(request.server, request.query.client_id, request.query.redirect_uri).then(function(client) {
         var flow = matchFlow(request.query.response_type);
         if (!flow) {
           return oauthError(request, reply, 'invalid_request', 'Invalid response_type');

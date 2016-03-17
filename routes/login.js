@@ -19,17 +19,36 @@ module.exports = function(server) {
         return reply.redirect(request.to('signup'));
       }
       if (request.session.get('oauth_client')) {
-        OAuthClient.findOne({client_id: request.session.get('oauth_client')}, function(err, client) {
-          if (err) return;
-          reply.view('login', {
-            errors: request.session.flash('error'),
-            signup_link: request.to('signup'),
-            recovery_link: request.to('recovery'),
-            logo_url: config.get('logo_url'),
-            lang: acceptLanguage.get(request.headers['accept-language']),
-            client_name: client.name
+        if (!config.get('use_etcd')) {
+          OAuthClient.findOne({client_id: request.session.get('oauth_client')}, function(err, client) {
+            if (err) return;
+            reply.view('login', {
+              errors: request.session.flash('error'),
+              signup_link: request.to('signup'),
+              recovery_link: request.to('recovery'),
+              logo_url: config.get('logo_url'),
+              lang: acceptLanguage.get(request.headers['accept-language']),
+              client_name: client.name
+            });
           });
-        });
+        }
+        else {
+          server.methods.etcdClient(request.session.get('oauth_client')).then(function(client) {
+            if (client == null) {
+              reply('Client does not exist').code(404);
+            }
+            else {
+              reply.view('login', {
+                errors: request.session.flash('error'),
+                signup_link: request.to('signup'),
+                recovery_link: request.to('recovery'),
+                logo_url: config.get('logo_url'),
+                lang: acceptLanguage.get(request.headers['accept-language']),
+                client_name: client.name
+              });
+            }
+          });
+        }
       }
       else {
         reply.view('login', {
