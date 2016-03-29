@@ -6,7 +6,7 @@ var Etcd = require('node-etcd');
 var keyBy = require('lodash.keyby');
 
 if (config.get('use_etcd')) {
-  etcd = new Etcd('127.0.0.1', '2379');
+  etcd = new Etcd(config.get('etcd_host'), config.get('etcd_port'));
 }
 
 function createMailToken(server, user_id, email) {
