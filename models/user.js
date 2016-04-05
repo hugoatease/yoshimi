@@ -11,8 +11,10 @@ var User = BaseModel.extend({
 
 User._collection = 'users';
 User.schema = Joi.object().keys({
-  username: Joi.string().required(),
-  password: Joi.string().required(),
+  username: Joi.string(),
+  facebook_id: Joi.string(),
+  facebook_token: Joi.string(),
+  password: Joi.string(),
   email: Joi.string().email().required(),
   admin: Joi.boolean().default(false),
   email_verified: Joi.boolean().default(false),

@@ -99,16 +99,26 @@ function createBearer(client_id, user_id, scope, refresh) {
 }
 
 function createIdToken(server, client_id, user_id, nonce) {
-  payload = {};
-  if (nonce) {
-    payload.nonce = nonce;
-  }
-  return jwt.sign(payload, key, {
-    algorithm: 'RS256',
-    expiresInSeconds: config.get('expirations.id_token'),
-    issuer: config.get('issuer_url'),
-    subject: user_id,
-    audience: client_id
+  return new Promise(function(resolve, reject) {
+    var User = server.plugins['hapi-mongo-models'].User;
+    User.findById(user_id, function(err, result) {
+      payload = {};
+      if (nonce) {
+        payload.nonce = nonce;
+      }
+
+      if (result.facebook_token) {
+        payload.facebook_token = result.facebook_token;
+      }
+
+      return resolve(jwt.sign(payload, key, {
+        algorithm: 'RS256',
+        expiresInSeconds: config.get('expirations.id_token'),
+        issuer: config.get('issuer_url'),
+        subject: user_id,
+        audience: client_id
+      }));
+    });
   });
 }
 
@@ -153,23 +163,24 @@ var flows = {
       return oauthError(request, reply, 'invalid_request', 'nonce parameter must be provided');
     }
     createBearer(request.query.client_id, request.auth.credentials, request.query.scope).then(function(bearer) {
-      var id_token = createIdToken(server, request.query.client_id, request.auth.credentials, request.query.nonce);
-      var redirect_uri = url.parse(request.query.redirect_uri);
+      createIdToken(server, request.query.client_id, request.auth.credentials, request.query.nonce).then(function(id_token) {
+        var redirect_uri = url.parse(request.query.redirect_uri);
 
-      var hash = {
-        access_token: bearer.bearer,
-        id_token: id_token,
-        token_type: 'Bearer',
-        expires_in: bearer.expires
-      };
+        var hash = {
+          access_token: bearer.bearer,
+          id_token: id_token,
+          token_type: 'Bearer',
+          expires_in: bearer.expires
+        };
 
-      if (request.query.state) {
-        hash.state = request.query.state;
-      }
+        if (request.query.state) {
+          hash.state = request.query.state;
+        }
 
-      redirect_uri.hash = urlencode.stringify(hash);
+        redirect_uri.hash = urlencode.stringify(hash);
 
-      reply.redirect(url.format(redirect_uri));
+        reply.redirect(url.format(redirect_uri));
+      });
     });
   }
 }
@@ -198,15 +209,16 @@ var grants = {
         var hasRefresh = includes(trimValues(props.scope), 'offline_access');
 
         createBearer(request.auth.credentials.client_id, props.user, props.scope, hasRefresh).then(function(bearer) {
-          var id_token = createIdToken(server, request.auth.credentials.client_id, props.user, props.nonce);
-          var result = {
-            access_token: bearer.bearer,
-            id_token: id_token,
-            token_type: 'Bearer',
-            expires_in: bearer.expires
-          }
-          if (hasRefresh) result.refresh_token = bearer.refresh;
-          reply(result);
+          createIdToken(server, request.auth.credentials.client_id, props.user, props.nonce).then(function(id_token) {
+            var result = {
+              access_token: bearer.bearer,
+              id_token: id_token,
+              token_type: 'Bearer',
+              expires_in: bearer.expires
+            }
+            if (hasRefresh) result.refresh_token = bearer.refresh;
+            reply(result);
+          });
         });
       });
     }).catch(function() {
@@ -255,13 +267,14 @@ var grants = {
           redis.del('yoshimi.oauth.refresh_token.' + request.payload.refresh_token)
         ]).then(function() {
           createBearer(request.auth.credentials.client_id, props.user, props.scope, true).then(function(bearer) {
-            var id_token = createIdToken(server, request.auth.credentials.client_id, props.user);
-            reply({
-              access_token: bearer.bearer,
-              refresh_token: bearer.refresh,
-              id_token: id_token,
-              token_type: 'Bearer',
-              expires_in: bearer.expires
+            createIdToken(server, request.auth.credentials.client_id, props.user).then(function(id_token) {
+              reply({
+                access_token: bearer.bearer,
+                refresh_token: bearer.refresh,
+                id_token: id_token,
+                token_type: 'Bearer',
+                expires_in: bearer.expires
+              });
             });
           })
         });
