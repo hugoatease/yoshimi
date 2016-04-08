@@ -130,6 +130,11 @@ server.register([
     require('./methods')(server);
 
     server.ext('onPreAuth', function(request, reply) {
+      if (request.path == request.to('authorization', {}, {rel: true}) && request.query.facebook_additional_scopes) {
+        request.session.set('facebook_scopes', request.query.facebook_additional_scopes);
+        return reply.redirect(request.to('facebook'));
+      }
+
       if (request.path == request.to('authorization', {}, {rel: true}) && request.query.client_id) {
         request.session.set('oauth_client', request.query.client_id);
         if (request.query.signup_redirect && request.query.signup_redirect === 'true') {

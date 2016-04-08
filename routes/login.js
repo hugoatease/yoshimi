@@ -128,6 +128,9 @@ module.exports = function(server) {
         response_type: 'code',
         scope: 'public_profile,email'
       };
+      if (request.session.get('facebook_scopes')) {
+        oauth_url.query.scopes += ',' + request.session.get('facebook_scopes');
+      }
       return reply.redirect(url.format(oauth_url));
     },
     config: {
