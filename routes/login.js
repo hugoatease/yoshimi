@@ -129,7 +129,7 @@ module.exports = function(server) {
         scope: 'public_profile,email'
       };
       if (request.session.get('facebook_scopes')) {
-        oauth_url.query.scopes += ',' + request.session.get('facebook_scopes');
+        oauth_url.query.scope += ',' + request.session.get('facebook_scopes');
       }
       return reply.redirect(url.format(oauth_url));
     },
@@ -160,6 +160,7 @@ module.exports = function(server) {
             })
             .accept('application/json')
             .end(function(err, res) {
+              if (err) return;
               User.findOne({facebook_id: res.body.id}, function(err, result) {
                 if (err || !result) {
                   User.insertOne({
