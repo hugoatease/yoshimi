@@ -5,6 +5,7 @@ var url = require('url');
 var superagent = require('superagent');
 var uid = require('uid-safe')
 var Boom = require('boom');
+var crypto = require('crypto');
 
 var acceptLanguage = require('accept-language');
 acceptLanguage.languages(['en', 'fr']);
@@ -162,14 +163,18 @@ module.exports = function(server) {
         .end(function(err, res) {
           var login_redirect = request.session.get('login_redirect');
           var bearer = res.body.access_token;
+          var hmac = crypto.createHmac('sha256', config.get('facebook_app_secret'));
+          hmac.update(bearer);
+          var appsecret_proof = hmac.digest('hex');
           superagent.get('https://graph.facebook.com/v2.3/me')
             .query({
               fields: 'id,name,email,first_name,last_name,verified',
-              access_token: res.body.access_token
+              access_token: res.body.access_token,
+              appsecret_proof: appsecret_proof
             })
             .accept('application/json')
             .end(function(err, res) {
-              if (err) return;
+              if (err) return reply(err);
               User.findOne({facebook_id: res.body.id}, function(err, result) {
                 if (err || !result) {
                   User.insertOne({
