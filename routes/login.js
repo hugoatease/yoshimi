@@ -124,6 +124,9 @@ module.exports = function(server) {
     method: 'GET',
     path: '/facebook_login',
     handler: function(request, reply) {
+      if (request.query.next) {
+        request.session.set('login_redirect', request.query.next);
+      }
       var oauth_url = url.parse('https://www.facebook.com/dialog/oauth');
       uid(16).then(function(state) {
         oauth_url.query = {
