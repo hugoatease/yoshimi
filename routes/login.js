@@ -3,6 +3,8 @@ var bcrypt = require('bcrypt');
 var config = require('config');
 var url = require('url');
 var superagent = require('superagent');
+var uid = require('uid-safe')
+var Boom = require('boom');
 
 var acceptLanguage = require('accept-language');
 acceptLanguage.languages(['en', 'fr']);
@@ -122,16 +124,20 @@ module.exports = function(server) {
     path: '/facebook_login',
     handler: function(request, reply) {
       var oauth_url = url.parse('https://www.facebook.com/dialog/oauth');
-      oauth_url.query = {
-        client_id: config.get('facebook_app_id'),
-        redirect_uri: config.get('facebook_redirect_uri'),
-        response_type: 'code',
-        scope: 'public_profile,email'
-      };
-      if (request.session.get('facebook_scopes')) {
-        oauth_url.query.scope += ',' + request.session.get('facebook_scopes');
-      }
-      return reply.redirect(url.format(oauth_url));
+      uid(16).then(function(state) {
+        oauth_url.query = {
+          client_id: config.get('facebook_app_id'),
+          redirect_uri: config.get('facebook_redirect_uri'),
+          response_type: 'code',
+          scope: 'public_profile,email',
+          state: state
+        };
+        if (request.session.get('facebook_scopes')) {
+          oauth_url.query.scope += ',' + request.session.get('facebook_scopes');
+        }
+        request.session.set('oauth_state', state);
+        return reply.redirect(url.format(oauth_url));
+      }.bind(this));
     },
     config: {
       id: 'facebook'
@@ -143,6 +149,9 @@ module.exports = function(server) {
     path: '/facebook_redirect',
     handler: function(request, reply) {
       var User = request.server.plugins['hapi-mongo-models'].User;
+      if (request.session.get('oauth_state') != request.query.state) {
+        return reply(Boom.unauthorized('Missing oauth state parameter'));
+      }
       superagent.post('https://graph.facebook.com/v2.3/oauth/access_token')
         .query({
           code: request.query.code,
