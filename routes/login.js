@@ -164,53 +164,62 @@ module.exports = function(server) {
           client_id: config.get('facebook_app_id')
         })
         .end(function(err, res) {
-          var login_redirect = request.session.get('login_redirect');
-          var bearer = res.body.access_token;
-          var hmac = crypto.createHmac('sha256', config.get('facebook_app_secret'));
-          hmac.update(bearer);
-          var appsecret_proof = hmac.digest('hex');
-          superagent.get('https://graph.facebook.com/v2.3/me')
+          superagent.get('https://graph.facebook.com/v2.3/oauth/access_token')
             .query({
-              fields: 'id,name,email,first_name,last_name,verified',
-              access_token: res.body.access_token,
-              appsecret_proof: appsecret_proof
+              grant_type: 'fb_exchange_token',
+              client_id: config.get('facebook_app_id'),
+              client_secret: config.get('facebook_app_secret'),
+              fb_exchange_token: res.body.access_token
             })
-            .accept('application/json')
             .end(function(err, res) {
-              if (err) return reply(err);
-              User.findOne({facebook_id: res.body.id}, function(err, result) {
-                if (err || !result) {
-                  User.insertOne({
-                    facebook_id: res.body.id,
-                    given_name: res.body.first_name,
-                    family_name: res.body.last_name,
-                    email: res.body.email,
-                    email_verified: res.body.verified,
-                    facebook_token: bearer
-                  }, function(err, results) {
-                    request.auth.session.set(results[0]._id);
-                    if (login_redirect) {
-                      request.session.clear('login_redirect');
-                      reply.redirect(login_redirect);
+              var login_redirect = request.session.get('login_redirect');
+              var bearer = res.body.access_token;
+              var hmac = crypto.createHmac('sha256', config.get('facebook_app_secret'));
+              hmac.update(bearer);
+              var appsecret_proof = hmac.digest('hex');
+              superagent.get('https://graph.facebook.com/v2.3/me')
+                .query({
+                  fields: 'id,name,email,first_name,last_name,verified',
+                  access_token: res.body.access_token,
+                  appsecret_proof: appsecret_proof
+                })
+                .accept('application/json')
+                .end(function(err, res) {
+                  if (err) return reply(err);
+                  User.findOne({facebook_id: res.body.id}, function(err, result) {
+                    if (err || !result) {
+                      User.insertOne({
+                        facebook_id: res.body.id,
+                        given_name: res.body.first_name,
+                        family_name: res.body.last_name,
+                        email: res.body.email,
+                        email_verified: res.body.verified,
+                        facebook_token: bearer
+                      }, function(err, results) {
+                        request.auth.session.set(results[0]._id);
+                        if (login_redirect) {
+                          request.session.clear('login_redirect');
+                          reply.redirect(login_redirect);
+                        }
+                        else {
+                          reply.redirect(request.to('index'));
+                        }
+                      });
                     }
                     else {
-                      reply.redirect(request.to('index'));
+                      User.findByIdAndUpdate(result._id, {$set: {facebook_token: bearer}}, function() {
+                        request.auth.session.set(result._id);
+                        if (login_redirect) {
+                          request.session.clear('login_redirect');
+                          reply.redirect(login_redirect);
+                        }
+                        else {
+                          reply.redirect(request.to('index'));
+                        }
+                      });
                     }
-                  });
-                }
-                else {
-                  User.findByIdAndUpdate(result._id, {$set: {facebook_token: bearer}}, function() {
-                    request.auth.session.set(result._id);
-                    if (login_redirect) {
-                      request.session.clear('login_redirect');
-                      reply.redirect(login_redirect);
-                    }
-                    else {
-                      reply.redirect(request.to('index'));
-                    }
-                  });
-                }
-              })
+                  })
+                }.bind(this));
             }.bind(this));
         }.bind(this));
     }
