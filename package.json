@@ -6,7 +6,7 @@
   "author": "Hugo Caille",
   "license": "Apache-2.0",
   "scripts": {
-    "start": "node app.js"
+    "start": "gulp app && node app.js"
   },
   "dependencies": {
     "accept-language": "^2.0.16",
