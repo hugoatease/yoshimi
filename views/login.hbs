@@ -21,9 +21,11 @@
       <b>Error.</b> {{{this}}}
     </div>
     {{/each}}
+    {{#if facebook_link}}
     <a class="btn btn-block btn-social btn-facebook" href="{{facebook_link}}">
       <span class="fa fa-facebook"></span> Sign in with Facebook
     </a>
+    {{/if}}
     <br />
     <form method="post">
       <div class="form-group">
